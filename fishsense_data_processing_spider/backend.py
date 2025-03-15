@@ -132,11 +132,11 @@ def get_camera_sns(paths: Dict[str, Path]) -> Dict[str, str]:
             metadata = et.get_tags([path.as_posix() for path in paths.values()], [
                                    'MakerNotes:SerialNumber'])
         lookup = {Path(data['SourceFile']): data['MakerNotes:SerialNumber'].strip()
-                  for data in metadata}
-        return {cksum: lookup[path] for cksum, path in paths.items()}
+                  for data in metadata if 'MakerNotes:SerialNumber' in data}
+        return {cksum: lookup[path] for cksum, path in paths.items() if path in lookup}
     except Exception as exc:  # pylint: disable=broad-except
         __log.exception('Exiftool invocation failed due to %s', exc)
-        return None
+        return {}
 
 
 def get_project_export(project_id: int, label_studio_api_key: str, label_studio_host: str) -> Dict:
