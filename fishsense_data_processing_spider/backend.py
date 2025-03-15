@@ -8,7 +8,7 @@ import multiprocessing.pool
 from hashlib import md5
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import exiftool
 import numpy as np
