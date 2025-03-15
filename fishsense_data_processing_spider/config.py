@@ -82,6 +82,11 @@ validators = [
         default='1m'
     ),
     Validator(
+        'summary.interval',
+        cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
+        default='1m'
+    ),
+    Validator(
         'postgres.username',
         required=True,
         cast=str
@@ -131,7 +136,7 @@ settings = Dynaconf(
 # `settings_files` = Load these files in the order.
 with open(settings.postgres.password_file, 'r', encoding='utf-8') as handle:
     __postgres_password = handle.read(256)
-POSTGRES_CONNECTION_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
+PG_CONN_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
                            f'{settings.postgres.host}:{settings.postgres.port}/'
                            f'{settings.postgres.database}')
 

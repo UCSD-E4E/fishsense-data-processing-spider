@@ -12,10 +12,11 @@ from prometheus_client import start_http_server
 
 from fishsense_data_processing_spider.backend import (get_camera_sns,
                                                       get_file_checksum)
-from fishsense_data_processing_spider.config import (POSTGRES_CONNECTION_STR,
+from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.metrics import (
+    get_gauge,
     add_thread_to_monitor, get_counter, get_summary,
     remove_thread_from_monitor, system_monitor_thread)
 
@@ -80,7 +81,7 @@ class Service:
             # Compute checksum
             image_key = image.relative_to(data_root).as_posix()
             image_counter.labels(phase='discover_dives').inc()
-            with psycopg.connect(POSTGRES_CONNECTION_STR,
+            with psycopg.connect(PG_CONN_STR,
                                  row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
                 # See if image already is known
@@ -138,7 +139,7 @@ class Service:
             subsystem='spider',
             labelnames=['phase']
         )
-        with psycopg.connect(POSTGRES_CONNECTION_STR, row_factory=psycopg.rows.dict_row) as con, \
+        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                 con.cursor() as cur:
             while True:
                 with query_timer.labels(query='select_images_without_camerasn').time():
@@ -170,15 +171,57 @@ class Service:
                     )
                 con.commit()
 
-
-
-
+    def __summary_thread(self):
+        __log = logging.getLogger('summary')
+        counts = get_gauge(
+            'count',
+            documentation='Counts',
+            labelnames=['table'],
+            namespace='e4efs',
+            subsystem='spider'
+        )
+        query_timer = get_summary(
+            'query_duration',
+            'SQL Query Duration',
+            labelnames=['query'],
+            namespace='e4efs',
+            subsystem='spider'
+        )
+        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                con.cursor() as cur:
+            while True:
+                last_run = dt.datetime.now()
+                next_run = last_run + settings.summary.interval
+                try:
+                    with query_timer.labels(query='count_images').time():
+                        cur.execute('SELECT COUNT(*) FROM images;')
+                    counts.labels(table='images').set(cur.fetchone()['count'])
+                    with query_timer.labels(query='count_dives').time():
+                        cur.execute('SELECT COUNT(*) FROM dives;')
+                    counts.labels(table='dives').set(cur.fetchone()['count'])
+                    with query_timer.labels(query='count_cdives').time():
+                        cur.execute('SELECT COUNT(*) FROM canonical_dives;')
+                    counts.labels(table='canonical_dives').set(
+                        cur.fetchone()['count'])
+                except Exception as exc:  # pylint: disable=broad-except
+                    __log.exception('Summary thread failed due to %s', exc)
+                time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
+                if time_to_sleep > 0:
+                    time.sleep(time_to_sleep)
 
     def run(self):
         """Main entry point
         """
         start_http_server(9090)
         system_monitor_thread.start()
+        summary_thread = Thread(
+            target=self.__summary_thread,
+            name='summary_thread',
+            daemon=True
+        )
+        summary_thread.start()
+        add_thread_to_monitor(summary_thread)
+
         while True:
             last_run = dt.datetime.now()
             next_run: dt.datetime = last_run + settings.scraper.interval
