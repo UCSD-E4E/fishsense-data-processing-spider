@@ -8,6 +8,28 @@ services:
       - fishsense_data_reef:/mnt/fishsense_data_reef:ro
       - ./settings.toml:/settings.toml:ro
       - ./.secrets.toml:/.secrets.toml:ro
+  postgres:
+    image: postgres:16.4
+    restart: always
+    shm_size: 128 mb
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
+    volumes:
+      - ./postgres/data/:/var/lib/postgresql/data/:rw
+      - ./postgres/config/:/etc/postgresql/:ro
+      # - ./.secrets/certs/:/certs/:ro
+      - ./postgres/scripts/:/docker-entrypoint-initdb.d/:ro
+      - /etc/passwd:/etc/passwd:ro
+    secrets:
+      - postgres_admin_password
+    command: --config_file=/etc/postgresql/postgres.conf
+    ports:
+      - 5432:5432
+    user: "${USER_ID}:${GROUP_ID}"
+
+secrets:
+  postgres_admin_password: 
+    file: .secrets/postgres_admin_password.txt
 
 volumes:
   fishsense_data_reef:
