@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "njpwerner.autodocstring",
+        "ms-python.isort",
+        "ms-python.autopep8"
+    ]
+}
