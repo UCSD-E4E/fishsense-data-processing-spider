@@ -22,6 +22,9 @@ configs = [
             'username': 'postgres',
             'password_file': './README.md',
             'host': 'localhost'
+        },
+        'exiftool': {
+            'path': './README.md'
         }
     },
     {
@@ -34,6 +37,9 @@ configs = [
             'username': 'postgres',
             'password_file': './README.md',
             'host': 'localhost'
+        },
+        'exiftool': {
+            'path': './README.md'
         }
     },
 ]

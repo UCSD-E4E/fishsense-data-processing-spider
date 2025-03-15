@@ -2,6 +2,7 @@
 '''
 import datetime as dt
 import json
+import logging
 import multiprocessing
 import multiprocessing.pool
 from hashlib import md5
@@ -9,9 +10,12 @@ from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import exiftool
 import numpy as np
 from label_studio_sdk.client import LabelStudio
 from PIL import ExifTags, Image
+
+from fishsense_data_processing_spider.config import settings
 
 
 def get_image_date(path: Path) -> Optional[dt.datetime]:
@@ -93,27 +97,46 @@ def get_dive_checksum(path: Path) -> str:
     return cksum.hexdigest()
 
 
-# def get_camera_sn(path: Path) -> Optional[str]:
-#     try:
-#         img = Image.open(path)
-#         exif = img.getexif()
-#         return str(exif.get(ExifTags.Base.CameraSerialNumber))
-#     except Exception:
-#         return None
+def get_olympus_camera_sn(path: Path) -> Optional[str]:
+    """Retrieves the camera serial number
+
+    Args:
+        path (Path): Path to image
+
+    Returns:
+        Optional[str]: Camera Serial Number
+    """
+    __log = logging.getLogger('exiftool')
+    try:
+        with exiftool.ExifToolHelper(executable=settings.exiftool.path.as_posix()) as et:
+            metadata = et.get_tags(
+                path.as_posix(), ['MakerNotes:SerialNumber'])[0]
+        return metadata['MakerNotes:SerialNumber'].strip()
+    except Exception as exc:  # pylint: disable=broad-except
+        __log.exception('Exiftool invocation failed due to %s', exc)
+        return None
 
 
-# def get_camera_sns(paths: Iterable[Path]) -> List[str]:
-#     """Retrieve camera serial numbers
+def get_camera_sns(paths: Dict[str, Path]) -> Dict[str, str]:
+    """Retrieve camera serial numbers
 
-#     Args:
-#         paths (Iterable[Path]): Sequence of images to check
+    Args:
+        paths (Dict[str, Path]): Mapping of indices and paths
 
-#     Returns:
-#         List[str]: List of corresponding camera serial numbers
-#     """
-#     with multiprocessing.Pool() as pool:
-#         sns = pool.map(get_camera_sn, paths)
-#     return sns
+    Returns:
+        Dict[str, str]: Mapping of corresponding camera serial numbers
+    """
+    __log = logging.getLogger('exiftool')
+    try:
+        with exiftool.ExifToolHelper(executable=settings.exiftool.path.as_posix()) as et:
+            metadata = et.get_tags([path.as_posix() for path in paths.values()], [
+                                   'MakerNotes:SerialNumber'])
+        lookup = {Path(data['SourceFile']): data['MakerNotes:SerialNumber'].strip()
+                  for data in metadata}
+        return {cksum: lookup[path] for cksum, path in paths.items()}
+    except Exception as exc:  # pylint: disable=broad-except
+        __log.exception('Exiftool invocation failed due to %s', exc)
+        return None
 
 
 def get_project_export(project_id: int, label_studio_api_key: str, label_studio_host: str) -> Dict:

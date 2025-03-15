@@ -34,6 +34,10 @@ RUN poetry install --only main
 # Now let's build the runtime image from the builder.
 #   We'll just copy the env and the PATH reference.
 FROM python:3.12-slim AS runtime
+# Install exiftool
+ADD --checksum=sha256:1cd555144846a28298783bebf3ab452235273c78358410813e3d4e93c653b1fa https://exiftool.org/Image-ExifTool-13.25.tar.gz /tmp
+RUN tar -xzvf /tmp/Image-ExifTool-13.25.tar.gz
+ENV E4EFS_EXIFTOOL__PATH=/Image-ExifTool-13.25/exiftool
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
