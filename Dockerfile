@@ -11,7 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 ENV PYTHON_PACKAGE=fishsense_data_processing_spider
-ENV PYTHON_ENTRYPOINT=fsl_spider
 # Tell Poetry where to place its cache and virtual environment
 ENV POETRY_CACHE_DIR=/opt/.cache
 
@@ -43,4 +42,4 @@ COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/${PYTHON_PACKAGE} /app/${PYTHON_PACKAGE}
 
 
-ENTRYPOINT ["${PYTHON_ENTRYPOINT}"]
+ENTRYPOINT ["fsl_spider"]
