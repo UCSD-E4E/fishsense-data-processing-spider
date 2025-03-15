@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.4.0 (2025-03-15)
+
+### Chores
+
+- Increases summary interval
+  ([`6e790e3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6e790e3ebc87e49dfa09f42ca56d9ac98ef0ba21))
+
+### Features
+
+- Adds summary scraper
+  ([`38dd18e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/38dd18eff24f25a90684aeb0c1a976dcf080719b))
+
+
 ## v0.3.1 (2025-03-15)
 
 ### Bug Fixes
