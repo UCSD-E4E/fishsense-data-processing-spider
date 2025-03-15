@@ -26,6 +26,7 @@ validators = [
 
 settings = Dynaconf(
     envvar_prefix='E4EFS',
+    environments=False,
     settings_files=['settings.toml', '.secrets.toml'],
     merge_enabled=True,
     validators=validators

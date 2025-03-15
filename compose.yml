@@ -6,6 +6,8 @@ services:
     container_name: fishsense_data_processing_spider
     volumes:
       - fishsense_data_reef:/mnt/fishsense_data_reef:ro
+      - ./settings.toml:/settings.toml:ro
+      - ./.secrets.toml:/.secrets.toml:ro
 
 volumes:
   fishsense_data_reef:
