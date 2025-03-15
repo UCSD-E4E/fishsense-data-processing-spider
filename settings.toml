@@ -1,5 +1,5 @@
 [scraper]
-interval = "5m"
+interval = "1h"
 data_paths = [
     "/mnt/fishsense_data_reef/REEF/data/",
 ]

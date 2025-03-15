@@ -4,17 +4,20 @@ import datetime as dt
 import logging
 import time
 from pathlib import Path
+from threading import Thread
 
 import psycopg
 import psycopg.rows
 from prometheus_client import start_http_server
 
-from fishsense_data_processing_spider.backend import get_file_checksum, get_camera_sns
+from fishsense_data_processing_spider.backend import (get_camera_sns,
+                                                      get_file_checksum)
 from fishsense_data_processing_spider.config import (POSTGRES_CONNECTION_STR,
                                                      configure_logging,
                                                      settings)
-from fishsense_data_processing_spider.metrics import (get_counter, get_summary,
-                                                      system_monitor_thread)
+from fishsense_data_processing_spider.metrics import (
+    add_thread_to_monitor, get_counter, get_summary,
+    remove_thread_from_monitor, system_monitor_thread)
 
 
 def load_query(path: Path) -> str:
@@ -162,7 +165,7 @@ class Service:
                                 'camera_sn': camera_sn,
                                 'cksum': cksum
                             }
-                            for cksum, camera_sn in serial_numbers
+                            for cksum, camera_sn in serial_numbers.items()
                         ]
                     )
                 con.commit()
@@ -179,16 +182,21 @@ class Service:
         while True:
             last_run = dt.datetime.now()
             next_run: dt.datetime = last_run + settings.scraper.interval
+            process_dir_thread = Thread(
+                target=self.__process_dirs, name='process_dirs')
+            add_thread_to_monitor(process_dir_thread)
+            camera_sn_thread = Thread(
+                target=self.__compute_camera_sns, name='camera_sns')
+            add_thread_to_monitor(camera_sn_thread)
 
-            try:
-                self.__process_dirs()
-            except Exception:  # pylint: disable=broad-except
-                pass
+            process_dir_thread.start()
+            camera_sn_thread.start()
 
-            try:
-                self.__compute_camera_sns()
-            except Exception:  # pylint: disable=broad-except
-                pass
+            process_dir_thread.join()
+            camera_sn_thread.join()
+
+            remove_thread_from_monitor(process_dir_thread)
+            remove_thread_from_monitor(camera_sn_thread)
 
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:

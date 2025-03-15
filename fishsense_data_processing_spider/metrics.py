@@ -159,6 +159,15 @@ def add_thread_to_monitor(thread: Thread) -> None:
     __threads_to_monitor.append(thread)
 
 
+def remove_thread_from_monitor(thread: Thread) -> None:
+    """Removes thread from monitoring list
+
+    Args:
+        thread (Thread): Thread to stop monitoring
+    """
+    __threads_to_monitor.remove(thread)
+
+
 def __system_monitor_loop():
 
     wd_info = get_info(

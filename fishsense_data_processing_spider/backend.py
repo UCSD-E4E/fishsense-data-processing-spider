@@ -131,9 +131,9 @@ def get_camera_sns(paths: Dict[str, Path]) -> Dict[str, str]:
         with exiftool.ExifToolHelper(executable=settings.exiftool.path.as_posix()) as et:
             metadata = et.get_tags([path.as_posix() for path in paths.values()], [
                                    'MakerNotes:SerialNumber'])
-        lookup = {Path(data['SourceFile']): data['MakerNotes:SerialNumber'].strip(
-        ) for data in metadata}
-        return {cksum: lookup[cksum] for cksum in paths}
+        lookup = {Path(data['SourceFile']): data['MakerNotes:SerialNumber'].strip()
+                  for data in metadata}
+        return {cksum: lookup[path] for cksum, path in paths.items()}
     except Exception as exc:  # pylint: disable=broad-except
         __log.exception('Exiftool invocation failed due to %s', exc)
         return None
