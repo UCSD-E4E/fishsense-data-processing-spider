@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.1 (2025-03-15)
+
+### Bug Fixes
+
+- Adds error catch for exiftool
+  ([`0ff8a43`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/0ff8a43ff9fe8d6b7306c30374d79e59f470d0ae))
+
+
 ## v0.3.0 (2025-03-15)
 
 ### Bug Fixes
