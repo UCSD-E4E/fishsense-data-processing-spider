@@ -17,6 +17,11 @@ configs = [
             'data_paths': [
                 '//e4e-nas.ucsd.edu/fishsense_data/REEF/data/'
             ]
+        },
+        'postgres': {
+            'username': 'postgres',
+            'password_file': './README.md',
+            'host': 'localhost'
         }
     },
     {
@@ -24,6 +29,11 @@ configs = [
             'data_paths': [
                 '//e4e-nas.ucsd.edu/fishsense_data/REEF/data/'
             ]
+        },
+        'postgres': {
+            'username': 'postgres',
+            'password_file': './README.md',
+            'host': 'localhost'
         }
     },
 ]

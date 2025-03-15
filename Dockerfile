@@ -40,6 +40,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/${PYTHON_PACKAGE} /app/${PYTHON_PACKAGE}
+COPY sql sql
 
 
 ENTRYPOINT ["fsl_spider"]
