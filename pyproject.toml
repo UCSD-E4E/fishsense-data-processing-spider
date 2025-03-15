@@ -17,6 +17,7 @@ repository = 'https://github.com/UCSD-E4E/fishsense-data-processing-spider'
 python = "^3.12"
 dynaconf = "^3.2.10"
 prometheus-client = "^0.21.1"
+humanfriendly = "^10.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.7"
