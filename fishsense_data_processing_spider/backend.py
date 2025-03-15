@@ -7,16 +7,22 @@ import multiprocessing.pool
 from hashlib import md5
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from label_studio_sdk.client import LabelStudio
-from label_studio_sdk.projects.client_ext import ProjectExt
-from label_studio_sdk.types import BaseUser
 from PIL import ExifTags, Image
 
 
 def get_image_date(path: Path) -> Optional[dt.datetime]:
+    """Retrieves the date of the specified image
+
+    Args:
+        path (Path): Path to image
+
+    Returns:
+        Optional[dt.datetime]: Image date, otherwise None if unable to open image
+    """
     try:
         img = Image.open(path)
         exif = img.getexif()
@@ -24,11 +30,20 @@ def get_image_date(path: Path) -> Optional[dt.datetime]:
         creation_time = dt.datetime.strptime(
             creation_time_str, '%Y:%m:%d %H:%M:%S')
         return creation_time
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
 
 
 def get_dive_date(path: Path) -> Tuple[dt.date, bool, bool]:
+    """Computes the date of the dive
+
+    Args:
+        path (Path): Path to dive directory
+
+    Returns:
+        Tuple[dt.date, bool, bool]: Tuple of nominal dive date, flag indicating whether any date
+        data is invalid, and flag indicating whether the dates of images span multiple days
+    """
     jpgs = path.glob('*.JPG')
     with multiprocessing.Pool() as pool:
         img_dates = pool.map(get_image_date, jpgs)
@@ -45,6 +60,14 @@ def get_dive_date(path: Path) -> Tuple[dt.date, bool, bool]:
 
 
 def get_file_checksum(path: Path) -> str:
+    """Computes the checksum for the file
+
+    Args:
+        path (Path): Path to file to checksum
+
+    Returns:
+        str: Checksum of file
+    """
     cksum = md5()
     with open(path, 'rb') as handle:
         for blob in iter(lambda: handle.read(8192), b''):
@@ -53,6 +76,14 @@ def get_file_checksum(path: Path) -> str:
 
 
 def get_dive_checksum(path: Path) -> str:
+    """Computes the checksum for the dive
+
+    Args:
+        path (Path): Path to dive directory
+
+    Returns:
+        str: Dive checksum
+    """
     reference_data = sorted(path.glob('*.ORF'))
     with multiprocessing.Pool() as pool:
         checksums = pool.map(get_file_checksum, reference_data)
@@ -62,19 +93,27 @@ def get_dive_checksum(path: Path) -> str:
     return cksum.hexdigest()
 
 
-def get_camera_sn(path: Path) -> Optional[str]:
-    try:
-        img = Image.open(path)
-        exif = img.getexif()
-        return str(exif.get(ExifTags.Base.CameraSerialNumber))
-    except Exception:
-        return None
+# def get_camera_sn(path: Path) -> Optional[str]:
+#     try:
+#         img = Image.open(path)
+#         exif = img.getexif()
+#         return str(exif.get(ExifTags.Base.CameraSerialNumber))
+#     except Exception:
+#         return None
 
 
-def get_camera_sns(paths: Iterable[Path]) -> List[str]:
-    with multiprocessing.Pool() as pool:
-        sns = pool.map(get_camera_sn, paths)
-    return sns
+# def get_camera_sns(paths: Iterable[Path]) -> List[str]:
+#     """Retrieve camera serial numbers
+
+#     Args:
+#         paths (Iterable[Path]): Sequence of images to check
+
+#     Returns:
+#         List[str]: List of corresponding camera serial numbers
+#     """
+#     with multiprocessing.Pool() as pool:
+#         sns = pool.map(get_camera_sn, paths)
+#     return sns
 
 
 def get_project_export(project_id: int, label_studio_api_key: str, label_studio_host: str) -> Dict:
@@ -108,6 +147,14 @@ def get_project_export(project_id: int, label_studio_api_key: str, label_studio_
 
 
 def do_image_checksums(paths: List[Path]) -> Dict[Path, str]:
+    """Computes multiple image checksums
+
+    Args:
+        paths (List[Path]): List of paths to compute
+
+    Returns:
+        Dict[Path, str]: Mapping of image paths and corresponding checksums
+    """
     with multiprocessing.Pool() as pool:
         checksums = pool.map(get_file_checksum, paths)
     return {paths[idx]: checksums[idx] for idx in range(len(paths))}

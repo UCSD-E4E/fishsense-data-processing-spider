@@ -17,6 +17,11 @@ platform_dirs = platformdirs.PlatformDirs('e4efs_spider')
 
 
 def get_log_path() -> Path:
+    """Get log path
+
+    Returns:
+        Path: Path to log directory
+    """
     if IS_DOCKER:
         return Path('/e4efs/logs')
     log_path = platform_dirs.user_log_path
@@ -25,6 +30,11 @@ def get_log_path() -> Path:
 
 
 def get_data_path() -> Path:
+    """Get data path
+
+    Returns:
+        Path: Path to data directory
+    """
     if IS_DOCKER:
         return Path('/e4efs/data')
     data_path = platform_dirs.user_data_path
@@ -33,6 +43,11 @@ def get_data_path() -> Path:
 
 
 def get_config_path() -> Path:
+    """Get config path
+
+    Returns:
+        Path: Path to config directory
+    """
     if IS_DOCKER:
         return Path('/e4efs/config')
     config_path = Path('.')
@@ -40,6 +55,11 @@ def get_config_path() -> Path:
 
 
 def get_cache_path() -> Path:
+    """Get cache path
+
+    Returns:
+        Path: Path to cache directory
+    """
     if IS_DOCKER:
         return Path('/e4efs/cache')
     cache_path = platform_dirs.user_cache_path
