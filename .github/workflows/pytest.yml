@@ -16,6 +16,11 @@ jobs:
         python -m pip install --upgrade pip poetry
         poetry config virtualenvs.create false
         poetry install
+    - name: Set test env vars
+      run: |
+        echo "E4EFS_POSTGRES__USERNAME=postgres" >> "$GITHUB_ENV"
+        echo "E4EFS_POSTGRES__HOST=localhost" >> "$GITHUB_ENV"
+        echo "E4EFS_POSTGRES__PASSWORD_FILE=./README.md" >> "$GITHUB_ENV"
     - name: Test
       run: |
         coverage run -m pytest tests

@@ -11,7 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 ENV PYTHON_PACKAGE=fishsense_data_processing_spider
-ENV PYTHON_ENTRYPOINT=fsl_spider
 # Tell Poetry where to place its cache and virtual environment
 ENV POETRY_CACHE_DIR=/opt/.cache
 
@@ -38,9 +37,12 @@ FROM python:3.12-slim AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
+ENV E4EFS_DOCKER=true
 
+RUN mkdir -p /e4efs/config /e4efs/logs /e4efs/data /e4efs/cache
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/${PYTHON_PACKAGE} /app/${PYTHON_PACKAGE}
+COPY sql sql
 
 
-ENTRYPOINT ["${PYTHON_ENTRYPOINT}"]
+ENTRYPOINT ["fsl_spider"]

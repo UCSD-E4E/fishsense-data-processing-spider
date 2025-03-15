@@ -270,3 +270,8 @@ $RECYCLE.BIN/
 
 # Ignore dynaconf secret files
 .secrets.*
+.secrets/
+postgres/data
+logs/
+data/
+cache/
