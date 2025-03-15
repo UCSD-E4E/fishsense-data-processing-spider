@@ -5,19 +5,19 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
+from typing import Any, Dict, Optional, Union
 
 import psycopg
 import psycopg.rows
 from prometheus_client import start_http_server
 
-from fishsense_data_processing_spider.backend import (get_camera_sns,
-                                                      get_file_checksum)
+from fishsense_data_processing_spider.backend import (
+    get_camera_sns, get_dive_checksum_from_query, get_file_checksum)
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.metrics import (
-    get_gauge,
-    add_thread_to_monitor, get_counter, get_summary,
+    add_thread_to_monitor, get_counter, get_gauge, get_summary,
     remove_thread_from_monitor, system_monitor_thread)
 
 
@@ -32,6 +32,29 @@ def load_query(path: Path) -> str:
     """
     with open(path, 'r', encoding='utf-8') as handle:
         return handle.read(int(1e9))
+
+
+def do_query(path: Union[Path, str], cur: psycopg.Cursor, params: Optional[Dict[str, Any]] = None):
+    """Convenience function to time and execute a query
+
+    Args:
+        path (Union[Path, str]): Path to query file
+        cur (psycopg.Cursor): Cursor
+        params (Optional[Dict[str, Any]]): Query parameters.  Defaults to None
+    """
+    path = Path(path)
+    query_timer = get_summary(
+        'query_duration',
+        'SQL Query Duration',
+        labelnames=['query'],
+        namespace='e4efs',
+        subsystem='spider'
+    )
+    with query_timer.labels(query=path.stem).time():
+        cur.execute(
+            query=load_query(path),
+            params=params
+        )
 
 class Service:
     """Service class
@@ -118,6 +141,28 @@ class Service:
                     )
                     con.commit()
                 images_added.inc()
+
+        # For each dive
+        do_query('sql/select_all_dives.sql', cur)
+        dives = [row['path'] for row in cur.fetchall()]
+        for dive_path in dives:
+            do_query(
+                path='sql/select_images_in_dive.sql',
+                cur=cur,
+                params={
+                    'dive': dive_path
+                }
+            )
+            result = cur.fetchall()
+            cksum = get_dive_checksum_from_query(result)
+            do_query(
+                path='sql/update_dive_cksum.sql',
+                cur=cur,
+                params={
+                    'cksum': cksum,
+                    'path': dive_path
+                }
+            )
 
     def __process_dirs(self):
         for data_dir in settings.scraper.data_paths:

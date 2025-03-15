@@ -79,6 +79,13 @@ def get_file_checksum(path: Path) -> str:
     return cksum.hexdigest()
 
 
+def get_dive_checksum_from_query(result: List[Dict[str, str]]) -> str:
+    cksum = md5()
+    sequence = sorted(result, key=lambda x: x['path'])
+    for row in sequence:
+        cksum.update(f'{Path(row['path']).name}:{row['image_md5']}\n'.encode())
+    return cksum.hexdigest()
+
 def get_dive_checksum(path: Path) -> str:
     """Computes the checksum for the dive
 
