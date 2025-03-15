@@ -37,7 +37,9 @@ FROM python:3.12-slim AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
+ENV E4EFS_DOCKER=true
 
+RUN mkdir -p /e4efs/config /e4efs/logs /e4efs/data /e4efs/cache
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/${PYTHON_PACKAGE} /app/${PYTHON_PACKAGE}
 COPY sql sql

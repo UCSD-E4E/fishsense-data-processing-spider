@@ -8,7 +8,9 @@ import psycopg
 import psycopg.rows
 
 from fishsense_data_processing_spider.backend import get_file_checksum
-from fishsense_data_processing_spider.config import settings, POSTGRES_CONNECTION_STR
+from fishsense_data_processing_spider.config import (POSTGRES_CONNECTION_STR,
+                                                     configure_logging,
+                                                     settings)
 
 
 def load_query(path: Path) -> str:
@@ -97,6 +99,7 @@ class Service:
 def main():
     """Main entry point
     """
+    configure_logging()
     Service().run()
 
 if __name__ == '__main__':
