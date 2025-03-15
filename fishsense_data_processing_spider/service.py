@@ -9,7 +9,7 @@ import psycopg
 import psycopg.rows
 from prometheus_client import start_http_server
 
-from fishsense_data_processing_spider.backend import get_file_checksum
+from fishsense_data_processing_spider.backend import get_file_checksum, get_camera_sns
 from fishsense_data_processing_spider.config import (POSTGRES_CONNECTION_STR,
                                                      configure_logging,
                                                      settings)
@@ -64,7 +64,8 @@ class Service:
             'images_processed',
             'Number of images processed',
             namespace='e4efs',
-            subsystem='spider'
+            subsystem='spider',
+            labelnames=['phase']
         )
         images_added = get_counter(
             'images_added',
@@ -74,10 +75,8 @@ class Service:
         )
         for image in images:
             # Compute checksum
-            cksum = get_file_checksum(image)
-            dive = image.parent.relative_to(data_root).as_posix()
             image_key = image.relative_to(data_root).as_posix()
-            image_counter.inc()
+            image_counter.labels(phase='discover_dives').inc()
             with psycopg.connect(POSTGRES_CONNECTION_STR,
                                  row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
@@ -91,6 +90,9 @@ class Service:
                     ).fetchall()
                 if len(result) == 1:
                     continue
+                # do heavy lifting
+                cksum = get_file_checksum(image)
+                dive = image.parent.relative_to(data_root).as_posix()
                 # Dive is probably not known yet, add
                 with query_timer.labels('insert_dive_path').time():
                     cur.execute(
@@ -118,6 +120,57 @@ class Service:
             data_path = Path(data_dir)
             self.__discover_dives(data_path)
 
+    def __compute_camera_sns(self, batch_size=128):
+        query_timer = get_summary(
+            'query_duration',
+            'SQL Query Duration',
+            labelnames=['query'],
+            namespace='e4efs',
+            subsystem='spider'
+        )
+        image_counter = get_counter(
+            'images_processed',
+            'Number of images processed',
+            namespace='e4efs',
+            subsystem='spider',
+            labelnames=['phase']
+        )
+        with psycopg.connect(POSTGRES_CONNECTION_STR, row_factory=psycopg.rows.dict_row) as con, \
+                con.cursor() as cur:
+            while True:
+                with query_timer.labels(query='select_images_without_camerasn').time():
+                    cur.execute(
+                        query=load_query(
+                            'sql/select_images_without_camerasn.sql'),
+                        params={
+                            'limit': batch_size
+                        }
+                    )
+                results = cur.fetchall()
+                if len(results) == 0:
+                    return
+                image_counter.labels(phase='camera_sns').inc(len(results))
+                images = {result['cksum']: Path(
+                    result['data_path']) / result['path'] for result in results}
+                serial_numbers = get_camera_sns(images)
+
+                with query_timer.labels(query=f'update_image_camerasn_x{batch_size}').time():
+                    cur.executemany(
+                        query=load_query('sql/update_image_camerasn.sql'),
+                        params_seq=[
+                            {
+                                'camera_sn': camera_sn,
+                                'cksum': cksum
+                            }
+                            for cksum, camera_sn in serial_numbers
+                        ]
+                    )
+                con.commit()
+
+
+
+
+
     def run(self):
         """Main entry point
         """
@@ -129,6 +182,11 @@ class Service:
 
             try:
                 self.__process_dirs()
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+            try:
+                self.__compute_camera_sns()
             except Exception:  # pylint: disable=broad-except
                 pass
 

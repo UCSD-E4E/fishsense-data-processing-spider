@@ -108,6 +108,12 @@ validators = [
         required=True,
         cast=str,
         default='postgres'
+    ),
+    Validator(
+        'exiftool.path',
+        required=True,
+        cast=Path,
+        condition=lambda x: Path(x).is_file()
     )
 ]
 
