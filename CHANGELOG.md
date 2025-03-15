@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.3.0 (2025-03-15)
+
+### Bug Fixes
+
+- Fixes exif
+  ([`7d7fee1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/7d7fee1044b097805f243ed2db1f0440684a09ce))
+
+### Code Style
+
+- Removes unused import
+  ([`e51bd3b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/e51bd3bb1a791e2f1ce2106a3f6a0afe710283c8))
+
+### Features
+
+- Adds exif
+  ([`8a95b0f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/8a95b0f1b74a09908f9581591e933c0890a02de3))
+
+
 ## v0.2.0 (2025-03-15)
 
 ### Bug Fixes
