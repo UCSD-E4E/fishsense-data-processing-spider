@@ -3,6 +3,8 @@
 class Service:
     """Service class
     """
+    # pylint: disable=too-few-public-methods
+    # Main entry point
     def __init__(self):
         pass
 
