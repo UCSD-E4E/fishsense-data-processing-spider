@@ -25,3 +25,6 @@ SET data_path = 0;
 
 UPDATE canonical_dives
 SET data_path = 0;
+
+ALTER TABLE images
+ADD ignore BOOLEAN NOT NULL DEFAULT false;
