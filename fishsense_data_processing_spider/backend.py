@@ -81,6 +81,14 @@ def get_file_checksum(path: Path) -> str:
 
 
 def get_dive_checksum_from_query(result: List[Dict[str, str]]) -> str:
+    """Computes the dive checksum from query result
+
+    Args:
+        result (List[Dict[str, str]]): List of dict_row results
+
+    Returns:
+        str: Dive checksum
+    """
     cksum = md5()
     sequence = sorted(result, key=lambda x: x['path'])
     for row in sequence:
