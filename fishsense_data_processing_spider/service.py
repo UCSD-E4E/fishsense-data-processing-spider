@@ -206,9 +206,9 @@ class Service:
             namespace='e4efs',
             subsystem='spider'
         )
-        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                con.cursor() as cur:
-            while True:
+        while True:
+            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                    con.cursor() as cur:
                 with query_timer.labels(query='select_images_without_camerasn').time():
                     cur.execute(
                         query=load_query(
@@ -256,9 +256,9 @@ class Service:
             namespace='e4efs',
             subsystem='spider'
         )
-        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                con.cursor() as cur:
-            while True:
+        while True:
+            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                    con.cursor() as cur:
                 last_run = dt.datetime.now()
                 next_run = last_run + settings.summary.interval
                 try:
