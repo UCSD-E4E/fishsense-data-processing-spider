@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.7.0 (2025-03-16)
+
+### Features
+
+- Adds canoncial dive insert
+  ([`2acd239`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2acd239505d76640669d476e8c68a0f7fdcb6901))
+
+
 ## v0.6.1 (2025-03-16)
 
 ### Bug Fixes
