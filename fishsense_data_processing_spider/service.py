@@ -17,7 +17,7 @@ from fishsense_data_processing_spider.backend import (
     get_image_date)
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
-                                                     settings)
+                                                     settings, get_log_path)
 from fishsense_data_processing_spider.metrics import (
     add_thread_to_monitor, get_counter, get_gauge, get_summary,
     remove_thread_from_monitor, system_monitor_thread)
@@ -286,6 +286,7 @@ class Service:
             subsystem='spider',
             labelnames=['phase']
         )
+        failed_images: Dict[str, Exception] = {}
         while True:
             with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
@@ -303,8 +304,16 @@ class Service:
                     break
                 results = {row['cksum']: Path(row['img_path'])
                            for row in results}
-                dates = {cksum: get_image_date(
-                    path) for cksum, path in results.items() if path.is_file()}
+                date_results: Dict[str, Union[dt.datetime, Exception]] = {cksum: get_image_date(
+                    path) for cksum, path in results.items() if cksum not in failed_images}
+                if len(date_results) == 0:
+                    break
+                dates = {cksum: date
+                         for cksum, date in date_results.items()
+                         if isinstance(date, dt.datetime)}
+                failed_images.update({cksum: date
+                                      for cksum, date in date_results.items()
+                                      if not isinstance(date, dt.datetime)})
                 image_counter.labels(phase='image_dates').inc(len(dates))
                 do_many_query(
                     path='sql/update_image_date.sql',
@@ -333,7 +342,7 @@ class Service:
                 )
                 results = cur.fetchall()
                 dates = [dt.datetime.fromisoformat(
-                    row['date']) for row in results if row is not None]
+                    row['date']) for row in results if row['date'] is not None]
                 invalid_dates = (len(dates) != len(results))
                 multiple_dates = len(dates) > 1
                 if len(dates) == 0:
@@ -341,17 +350,21 @@ class Service:
                     __log.warning('Dive %s has no images???', dive_path)
                     continue
                 mean_date = dt.date.fromtimestamp(
-                    np.mean(date.timestamp() for date in dates))
+                    np.mean([date.timestamp() for date in dates]))
                 do_query(
                     path='sql/update_dive_dates.sql',
                     cur=cur,
                     params={
                         'date': mean_date.isoformat(),
-                        'invalid_images': invalid_dates,
-                        'multiple_dates': multiple_dates,
+                        'invalid_image': invalid_dates,
+                        'multiple_date': multiple_dates,
                         'path': dive_path
                     }
                 )
+        # report failed images
+        with open(get_log_path() / 'failed_images.log', 'w', encoding='utf-8') as handle:
+            for cksum, exc in failed_images.items():
+                handle.write(f'{cksum}: {exc}\n')
 
     def __summary_thread(self):
         __log = logging.getLogger('summary')

@@ -8,25 +8,25 @@ import multiprocessing.pool
 from hashlib import md5
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Union
 
 import exiftool
-import numpy as np
 from label_studio_sdk.client import LabelStudio
 from PIL import ExifTags, Image
 
 from fishsense_data_processing_spider.config import settings
 
 
-def get_image_date(path: Path) -> Optional[dt.datetime]:
+def get_image_date(path: Path) -> Union[dt.datetime, Exception]:
     """Retrieves the date of the specified image
 
     Args:
         path (Path): Path to image
 
     Returns:
-        Optional[dt.datetime]: Image date, otherwise None if unable to open image
+        Union[dt.datetime, Exception]: Image date, otherwise the corresponding exception
     """
+    __log = logging.getLogger('get_image_date')
     try:
         img = Image.open(path)
         exif = img.getexif()
@@ -34,33 +34,34 @@ def get_image_date(path: Path) -> Optional[dt.datetime]:
         creation_time = dt.datetime.strptime(
             creation_time_str, '%Y:%m:%d %H:%M:%S')
         return creation_time
-    except Exception:  # pylint: disable=broad-exception-caught
-        return None
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        __log.exception('Unable to retrieve image date for %s: %s', path, exc)
+        return exc
 
 
-def get_dive_date(path: Path) -> Tuple[dt.date, bool, bool]:
-    """Computes the date of the dive
+# def get_dive_date(path: Path) -> Tuple[dt.date, bool, bool]:
+#     """Computes the date of the dive
 
-    Args:
-        path (Path): Path to dive directory
+#     Args:
+#         path (Path): Path to dive directory
 
-    Returns:
-        Tuple[dt.date, bool, bool]: Tuple of nominal dive date, flag indicating whether any date
-        data is invalid, and flag indicating whether the dates of images span multiple days
-    """
-    jpgs = path.glob('*.JPG')
-    with multiprocessing.Pool() as pool:
-        img_dates = pool.map(get_image_date, jpgs)
-    invalid_dates = any(date is None for date in img_dates)
-    valid_dates = [date for date in img_dates if date]
-    timestamps = [date.timestamp() for date in valid_dates]
-    if len(timestamps) == 0:
-        return None, False, False
-    end_time = dt.datetime.fromtimestamp(max(timestamps))
-    start_time = dt.datetime.fromtimestamp(min(timestamps))
-    multiple_dates = (end_time.date() != start_time.date())
-    mean_date = dt.datetime.fromtimestamp(np.mean(timestamps)).date()
-    return mean_date, invalid_dates, multiple_dates
+#     Returns:
+#         Tuple[dt.date, bool, bool]: Tuple of nominal dive date, flag indicating whether any date
+#         data is invalid, and flag indicating whether the dates of images span multiple days
+#     """
+#     jpgs = path.glob('*.JPG')
+#     with multiprocessing.Pool() as pool:
+#         img_dates = pool.map(get_image_date, jpgs)
+#     invalid_dates = any(date is None for date in img_dates)
+#     valid_dates = [date for date in img_dates if date]
+#     timestamps = [date.timestamp() for date in valid_dates]
+#     if len(timestamps) == 0:
+#         return None, False, False
+#     end_time = dt.datetime.fromtimestamp(max(timestamps))
+#     start_time = dt.datetime.fromtimestamp(min(timestamps))
+#     multiple_dates = (end_time.date() != start_time.date())
+#     mean_date = dt.datetime.fromtimestamp(np.mean(timestamps)).date()
+#     return mean_date, invalid_dates, multiple_dates
 
 
 def get_file_checksum(path: Path) -> str:
