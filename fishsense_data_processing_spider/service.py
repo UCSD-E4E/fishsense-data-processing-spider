@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from threading import Thread
 from typing import Any, Dict, List, Optional, Union
-
+import numpy as np
 import psycopg
 import psycopg.rows
 from prometheus_client import start_http_server
@@ -279,6 +279,13 @@ class Service:
             namespace='e4efs',
             subsystem='spider'
         )
+        image_counter = get_counter(
+            'images_processed',
+            'Number of images processed',
+            namespace='e4efs',
+            subsystem='spider',
+            labelnames=['phase']
+        )
         while True:
             with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
@@ -298,7 +305,7 @@ class Service:
                            for row in results}
                 dates = {cksum: get_image_date(
                     path) for cksum, path in results.items() if path.is_file()}
-
+                image_counter.labels(phase='image_dates').inc(len(dates))
                 do_many_query(
                     path='sql/update_image_date.sql',
                     cur=cur,
@@ -308,6 +315,43 @@ class Service:
                     } for cksum, date in dates.items()]
                 )
                 con.commit()
+
+        # image dates are now in pg, coalesce per dive
+        with psycopg.connect(PG_CONN_STR,
+                             row_factory=psycopg.rows.dict_row) as con, \
+                con.cursor() as cur:
+            # For each dive
+            do_query('sql/select_all_dives.sql', cur)
+            dives = [row['path'] for row in cur.fetchall()]
+            for dive_path in dives:
+                do_query(
+                    path='sql/query_dates_from_dive.sql',
+                    cur=cur,
+                    params={
+                        'dive': dive_path
+                    }
+                )
+                results = cur.fetchall()
+                dates = [dt.datetime.fromisoformat(
+                    row['date']) for row in results if row is not None]
+                invalid_dates = (len(dates) != len(results))
+                multiple_dates = len(dates) > 1
+                if len(dates) == 0:
+                    # no images, this is weird...
+                    __log.warning('Dive %s has no images???', dive_path)
+                    continue
+                mean_date = dt.date.fromtimestamp(
+                    np.mean(date.timestamp() for date in dates))
+                do_query(
+                    path='sql/update_dive_dates.sql',
+                    cur=cur,
+                    params={
+                        'date': mean_date.isoformat(),
+                        'invalid_images': invalid_dates,
+                        'multiple_dates': multiple_dates,
+                        'path': dive_path
+                    }
+                )
 
     def __summary_thread(self):
         __log = logging.getLogger('summary')
