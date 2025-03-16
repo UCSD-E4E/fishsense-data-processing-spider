@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.8.0 (2025-03-16)
+
+### Bug Fixes
+
+- Fixes summary thread connection duration
+  ([`c5716a6`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c5716a62b3be4199d45f1f1bcb94a1b6a3c7a932))
+
+### Code Style
+
+- Adds docstring
+  ([`b580a89`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b580a892a2bc6ee04bdb2b4243e04171b785a3d0))
+
+### Features
+
+- Adds camera tables and columns
+  ([`b47749b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b47749bf8cd5b0767503102b918abc7089f53b1c))
+
+
 ## v0.7.0 (2025-03-16)
 
 ### Features
