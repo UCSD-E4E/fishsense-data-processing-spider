@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v0.6.0 (2025-03-16)
+
+### Bug Fixes
+
+- Coalesce image selection by dive
+  ([`cd54587`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/cd545870fcd0049076e4a4aa0ffe8aa4153462db))
+
+- Reconnects to pg server
+  ([`07a1dbd`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/07a1dbd10e94d7877688e56a594687f89fee85f3))
+
+- Silences pillow
+  ([`e2b8424`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/e2b84246e689d0b72058e170df44dcb62dec5bfa))
+
+### Features
+
+- Adds dive date coalescing
+  ([`55c473e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/55c473eaa5f626a7ec640ed4a55037d2a4533fe3))
+
+- Adds thread to get image date
+  ([`9058ce7`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9058ce7f634cfd585df631a8c5c98fd82b989835))
+
+
 ## v0.5.0 (2025-03-16)
 
 ### Bug Fixes
