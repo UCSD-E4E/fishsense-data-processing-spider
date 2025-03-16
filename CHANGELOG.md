@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.6.1 (2025-03-16)
+
+### Bug Fixes
+
+- Fixes image date coalescing
+  ([`44ac080`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/44ac08012a2ced53fa1888757893fb568631120b))
+
+
 ## v0.6.0 (2025-03-16)
 
 ### Bug Fixes
