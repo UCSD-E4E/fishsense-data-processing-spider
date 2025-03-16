@@ -7,6 +7,7 @@ import logging.handlers
 import os
 import time
 from pathlib import Path
+from typing import Dict
 
 import platformdirs
 from dynaconf import Dynaconf, Validator
@@ -169,6 +170,13 @@ def configure_logging():
     console_handler.setFormatter(error_formatter)
     root_logger.addHandler(console_handler)
     logging.Formatter.converter = time.gmtime
+
+    logging_levels: Dict[str, str] = {
+        'PIL.TiffImagePlugin': 'INFO'
+    }
+    for logger_name, level in logging_levels.items():
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.getLevelNamesMapping()[level])
 
     logging.info('Log path: %s', get_log_path())
     logging.info('Data path: %s', get_data_path())
