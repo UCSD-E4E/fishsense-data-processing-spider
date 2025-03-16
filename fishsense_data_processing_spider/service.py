@@ -214,6 +214,12 @@ class Service:
                     }
                 )
 
+            # Consolidate canonical dives
+            do_query(
+                path='sql/insert_unique_dives.sql',
+                cur=cur
+            )
+
     def __compute_camera_sns(self, batch_size=1024):
         query_timer = get_summary(
             'query_duration',
