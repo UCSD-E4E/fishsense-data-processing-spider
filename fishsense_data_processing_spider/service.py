@@ -6,14 +6,15 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import psycopg
 import psycopg.rows
 from prometheus_client import start_http_server
 
 from fishsense_data_processing_spider.backend import (
-    get_camera_sns, get_dive_checksum_from_query, get_file_checksum)
+    get_camera_sns, get_dive_checksum_from_query, get_file_checksum,
+    get_image_date)
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
@@ -55,6 +56,35 @@ def do_query(path: Union[Path, str], cur: psycopg.Cursor, params: Optional[Dict[
         cur.execute(
             query=load_query(path),
             params=params
+        )
+
+
+def do_many_query(path: Union[Path, str],
+                  cur: psycopg.Cursor,
+                  param_seq: List[Dict[str, Any]],
+                  returning: bool = False) -> None:
+    """Convenience function to time and executemany
+
+    Args:
+        path (Union[Path, str]): Path to query file
+        cur (psycopg.Cursor): Cursor
+        param_seq (List[Dict[str, Any]]): Query parameters
+        returning (bool, optional): Flag indicating whether or not this query returns data. Defaults
+        to False.
+    """
+    path = Path(path)
+    query_timer = get_summary(
+        'query_duration',
+        'SQL Query Duration',
+        labelnames=['query'],
+        namespace='e4efs',
+        subsystem='spider'
+    )
+    with query_timer.labels(query=path.stem).time():
+        cur.executemany(
+            query=load_query(path),
+            params_seq=param_seq,
+            returning=returning
         )
 
 class Service:
@@ -240,6 +270,45 @@ class Service:
                     )
                 con.commit()
 
+    def __image_dates(self):
+        __log = logging.getLogger('image_dates')
+        query_result_length = get_summary(
+            'query_result_length',
+            'SQL Query Result Length',
+            labelnames=['query'],
+            namespace='e4efs',
+            subsystem='spider'
+        )
+        while True:
+            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                    con.cursor() as cur:
+                do_query(
+                    path='sql/select_next_image_for_date.sql',
+                    cur=cur,
+                    params={
+                        'limit': 128
+                    }
+                )
+                results = cur.fetchall()
+                query_result_length.labels(
+                    query='select_next_image_for_date').observe(len(results))
+                if len(results) == 0:
+                    break
+                results = {row['cksum']: Path(row['img_path'])
+                           for row in results}
+                dates = {cksum: get_image_date(
+                    path) for cksum, path in results.items() if path.is_file()}
+
+                do_many_query(
+                    path='sql/update_image_date.sql',
+                    cur=cur,
+                    param_seq=[{
+                        'date': date,
+                        'cksum': cksum
+                    } for cksum, date in dates.items()]
+                )
+                con.commit()
+
     def __summary_thread(self):
         __log = logging.getLogger('summary')
         counts = get_gauge(
@@ -301,14 +370,22 @@ class Service:
                 target=self.__compute_camera_sns, name='camera_sns')
             add_thread_to_monitor(camera_sn_thread)
 
+            dates_thread = Thread(
+                target=self.__image_dates,
+                name='image_dates'
+            )
+            add_thread_to_monitor(dates_thread)
+
             process_dir_thread.start()
             camera_sn_thread.start()
+            dates_thread.start()
 
             process_dir_thread.join()
             remove_thread_from_monitor(process_dir_thread)
             camera_sn_thread.join()
-
             remove_thread_from_monitor(camera_sn_thread)
+            dates_thread.join()
+            remove_thread_from_monitor(dates_thread)
 
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:

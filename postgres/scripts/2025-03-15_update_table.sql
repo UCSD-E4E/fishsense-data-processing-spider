@@ -28,3 +28,6 @@ SET data_path = 0;
 
 ALTER TABLE images
 ADD ignore BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE images
+ADD date TIMESTAMP NULL;
