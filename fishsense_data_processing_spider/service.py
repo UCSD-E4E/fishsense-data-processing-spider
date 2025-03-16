@@ -389,10 +389,10 @@ class Service:
             subsystem='spider'
         )
         while True:
+            last_run = dt.datetime.now()
+            next_run = last_run + settings.summary.interval
             with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
-                last_run = dt.datetime.now()
-                next_run = last_run + settings.summary.interval
                 try:
                     with query_timer.labels(query='count_images').time():
                         cur.execute('SELECT COUNT(*) FROM images;')
@@ -406,9 +406,9 @@ class Service:
                         cur.fetchone()['count'])
                 except Exception as exc:  # pylint: disable=broad-except
                     __log.exception('Summary thread failed due to %s', exc)
-                time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
-                if time_to_sleep > 0:
-                    time.sleep(time_to_sleep)
+            time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
+            if time_to_sleep > 0:
+                time.sleep(time_to_sleep)
 
     def run(self):
         """Main entry point
