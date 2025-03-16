@@ -1,6 +1,7 @@
 '''Main Service Entry Point
 '''
 import datetime as dt
+import itertools
 import logging
 import time
 from pathlib import Path
@@ -100,76 +101,90 @@ class Service:
             namespace='e4efs',
             subsystem='spider'
         )
-        for image in images:
+        for image_batch in itertools.batched(images, n=128):
             # Compute checksum
-            image_key = image.relative_to(data_root).as_posix()
-            image_counter.labels(phase='discover_dives').inc()
+            image_keys = [image.relative_to(
+                data_root).as_posix() for image in image_batch]
+            image_counter.labels(phase='discover_dives').inc(len(image_keys))
             with psycopg.connect(PG_CONN_STR,
                                  row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
                 # See if image already is known
                 with query_timer.labels('select_image_by_path').time():
-                    result = cur.execute(
+                    cur.executemany(
                         query=load_query('sql/select_image_by_path.sql'),
-                        params={
+                        params_seq=[{
                             'path': image_key
-                        }
-                    ).fetchall()
-                if len(result) == 1:
-                    continue
-                # do heavy lifting
-                cksum = get_file_checksum(image)
-                dive = image.parent.relative_to(data_root).as_posix()
-                # Dive is probably not known yet, add
-                with query_timer.labels('insert_dive_path').time():
-                    cur.execute(
-                        query=load_query('sql/insert_dive_path.sql'),
-                        params={
-                            'path': dive
-                        }
+                        } for image_key in image_keys],
+                        returning=True
                     )
-                    con.commit()
+                results = []
+                while True:
+                    results.append(cur.fetchone())
+                    if not cur.nextset():
+                        break
+                for idx, result in enumerate(results):
+                    if result is not None:
+                        continue
+                    image = image_batch[idx]
+                    image_key = image_keys[idx]
+                    # do heavy lifting
+                    cksum = get_file_checksum(image)
+                    dive = image.parent.relative_to(data_root).as_posix()
+                    # Dive is probably not known yet, add
+                    with query_timer.labels('insert_dive_path').time():
+                        cur.execute(
+                            query=load_query('sql/insert_dive_path.sql'),
+                            params={
+                                'path': dive
+                            }
+                        )
+                        con.commit()
 
-                with query_timer.labels('insert_image_path_dive_md5').time():
-                    cur.execute(
-                        query=load_query('sql/insert_image_path_dive_md5.sql'),
-                        params={
-                            'path': image_key,
-                            'dive': dive,
-                            'cksum': cksum
-                        }
-                    )
-                    con.commit()
-                images_added.inc()
-
-        # For each dive
-        do_query('sql/select_all_dives.sql', cur)
-        dives = [row['path'] for row in cur.fetchall()]
-        for dive_path in dives:
-            do_query(
-                path='sql/select_images_in_dive.sql',
-                cur=cur,
-                params={
-                    'dive': dive_path
-                }
-            )
-            result = cur.fetchall()
-            cksum = get_dive_checksum_from_query(result)
-            do_query(
-                path='sql/update_dive_cksum.sql',
-                cur=cur,
-                params={
-                    'cksum': cksum,
-                    'path': dive_path
-                }
-            )
+                    with query_timer.labels('insert_image_path_dive_md5').time():
+                        cur.execute(
+                            query=load_query(
+                                'sql/insert_image_path_dive_md5.sql'),
+                            params={
+                                'path': image_key,
+                                'dive': dive,
+                                'cksum': cksum
+                            }
+                        )
+                        con.commit()
+                    images_added.inc()
 
     def __process_dirs(self):
         for data_dir in settings.scraper.data_paths:
             data_path = Path(data_dir)
             self.__discover_dives(data_path)
 
-    def __compute_camera_sns(self, batch_size=128):
+        with psycopg.connect(PG_CONN_STR,
+                             row_factory=psycopg.rows.dict_row) as con, \
+                con.cursor() as cur:
+            # For each dive
+            do_query('sql/select_all_dives.sql', cur)
+            dives = [row['path'] for row in cur.fetchall()]
+            for dive_path in dives:
+                do_query(
+                    path='sql/select_images_in_dive.sql',
+                    cur=cur,
+                    params={
+                        'dive': dive_path
+                    }
+                )
+                result = cur.fetchall()
+                cksum = get_dive_checksum_from_query(result)
+                do_query(
+                    path='sql/update_dive_cksum.sql',
+                    cur=cur,
+                    params={
+                        'cksum': cksum,
+                        'path': dive_path
+                    }
+                )
+
+    def __compute_camera_sns(self, batch_size=1024):
         query_timer = get_summary(
             'query_duration',
             'SQL Query Duration',
@@ -183,6 +198,13 @@ class Service:
             namespace='e4efs',
             subsystem='spider',
             labelnames=['phase']
+        )
+        query_result_length = get_summary(
+            'query_result_length',
+            'SQL Query Result Length',
+            labelnames=['query'],
+            namespace='e4efs',
+            subsystem='spider'
         )
         with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                 con.cursor() as cur:
@@ -198,6 +220,8 @@ class Service:
                 results = cur.fetchall()
                 if len(results) == 0:
                     return
+                query_result_length.labels(
+                    query='select_images_without_camerasn').observe(len(results))
                 image_counter.labels(phase='camera_sns').inc(len(results))
                 images = {result['cksum']: Path(
                     result['data_path']) / result['path'] for result in results}
@@ -281,9 +305,9 @@ class Service:
             camera_sn_thread.start()
 
             process_dir_thread.join()
+            remove_thread_from_monitor(process_dir_thread)
             camera_sn_thread.join()
 
-            remove_thread_from_monitor(process_dir_thread)
             remove_thread_from_monitor(camera_sn_thread)
 
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
