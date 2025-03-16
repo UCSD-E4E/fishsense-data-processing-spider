@@ -1,12 +1,36 @@
 # CHANGELOG
 
 
+## v0.5.0 (2025-03-16)
+
+### Bug Fixes
+
+- Moves sql higher in build precedence
+  ([`2553f32`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2553f3243039b35b841657540bc135c46ed58ddf))
+
+### Features
+
+- Added batching
+  ([`aefa3d0`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/aefa3d0c6a6e3e95ee9a8aa0333110497a6a4d63))
+
+- Adds dive checksumming
+  ([`87f4216`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/87f421663966589a29aec9d3cf1deeaf8b5bd38b))
+
+- Adds ignore column
+  ([`96e834f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/96e834f4d844318485fdd4e5460f9393461cf25e))
+
+
 ## v0.4.0 (2025-03-15)
 
 ### Chores
 
 - Increases summary interval
   ([`6e790e3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6e790e3ebc87e49dfa09f42ca56d9ac98ef0ba21))
+
+### Continuous Integration
+
+- Fixes concurency
+  ([`ead1b7f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ead1b7f316ccc5417087a3dfcc0d006754c00145))
 
 ### Features
 
