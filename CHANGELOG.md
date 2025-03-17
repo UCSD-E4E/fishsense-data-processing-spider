@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.11.2 (2025-03-17)
+
+### Bug Fixes
+
+- Removes API key
+  ([`0ab353b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/0ab353bb0279f994d8b382174f8a4e5acb470338))
+
+
 ## v0.11.1 (2025-03-17)
 
 
