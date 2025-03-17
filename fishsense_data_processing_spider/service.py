@@ -23,6 +23,14 @@ from fishsense_data_processing_spider.metrics import (
     remove_thread_from_monitor, system_monitor_thread)
 
 
+def quick_con() -> psycopg.Connection:
+    """Convenience quick connect
+
+    Returns:
+        psycopg.Connection: Connection
+    """
+    return psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row)
+
 def load_query(path: Path) -> str:
     """Loads query from path
 
@@ -410,6 +418,48 @@ class Service:
             if time_to_sleep > 0:
                 time.sleep(time_to_sleep)
 
+    def __process_canonical_dives(self):
+        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                con.cursor() as cur:
+            do_query(
+                path='sql/select_canonical_dives.sql',
+                cur=cur
+            )
+            results = cur.fetchall()
+        data_roots = list({row['data_path'] for row in results})
+        dives = {Path(data_root): [Path(row['path'])
+                                   for row in results
+                                   if row['data_path'] == data_root]
+                 for data_root in data_roots}
+        multiple_camera_dives: List[Path] = []
+        for dive in itertools.chain(*dives.values()):
+            with quick_con() as con, con.cursor() as cur:
+                do_query(
+                    path='sql/select_cameras_per_dive.sql',
+                    cur=cur,
+                    params={
+                        'dive': dive.as_posix()
+                    }
+                )
+                camera_idx = [row['idx'] for row in cur.fetchall()]
+                if len(camera_idx) > 1:
+                    multiple_camera_dives.append(dive)
+                    continue
+                if len(camera_idx) == 0:
+                    # ????
+                    continue
+                do_query(
+                    path='sql/update_cdive_camera.sql',
+                    cur=cur,
+                    params={
+                        'camera': camera_idx[0],
+                        'path': dive.as_posix()
+                    }
+                )
+        with open(get_log_path() / 'multiple_camera_dives.log', 'w', encoding='utf-8') as handle:
+            for dive in multiple_camera_dives:
+                handle.write(f'{dive.as_posix()}\n')
+
     def run(self):
         """Main entry point
         """
@@ -449,6 +499,15 @@ class Service:
             remove_thread_from_monitor(camera_sn_thread)
             dates_thread.join()
             remove_thread_from_monitor(dates_thread)
+
+            cdive_process_thread = Thread(
+                target=self.__process_canonical_dives,
+                name='process_cdive'
+            )
+            add_thread_to_monitor(cdive_process_thread)
+            cdive_process_thread.start()
+            cdive_process_thread.join()
+            remove_thread_from_monitor(cdive_process_thread)
 
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:
