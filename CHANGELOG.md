@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.9.0 (2025-03-17)
+
+### Continuous Integration
+
+- Checking out with releaser
+  ([`9671e71`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9671e719e238a2ffa1d901a96df0a6eb6af9d5b8))
+
+### Features
+
+- Adds camera dive association
+  ([`7fcc71f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/7fcc71faec717349852b9cc72646e7ce2d1c8c9f))
+
+- Adds progress report
+  ([`cd18d66`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/cd18d66e602a65ad3c86eedc90df1b1c0bdc13c6))
+
+
 ## v0.8.0 (2025-03-16)
 
 ### Bug Fixes
