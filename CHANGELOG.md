@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.1 (2025-03-17)
+
+### Bug Fixes
+
+- Prevents selecting images that have duplicates in labeler
+  ([`9134483`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9134483c913cf0abf76649bba7ce46d241c7d368))
+
+
 ## v0.10.0 (2025-03-17)
 
 ### Chores
