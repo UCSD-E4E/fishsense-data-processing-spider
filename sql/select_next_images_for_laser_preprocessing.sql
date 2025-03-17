@@ -10,7 +10,7 @@ priority_images AS (
   LEFT JOIN priorities ON canonical_dives.priority = priorities.name
   LEFT JOIN label_studio_images ON images.image_md5 = label_studio_images.image_md5
   LEFT JOIN data_paths ON images.data_path = data_paths.idx
-  WHERE images.laser_task_id IS NULL
+  WHERE images.laser_task_id IS NULL AND label_studio_images.laser_task_id IS NULL
   ORDER BY priorities.idx
   LIMIT 8000
 ),
