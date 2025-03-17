@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v0.10.0 (2025-03-17)
+
+### Chores
+
+- Ignores mnt
+  ([`e8aa2aa`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/e8aa2aa47ead5e9fdf8912c1e37e1162c59d3966))
+
+### Features
+
+- Adds laser task correlation
+  ([`97dfa6d`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/97dfa6dffd93fccb844b3ab009cfbde00f1acb74))
+
+- Adds preprocessing job export
+  ([`f4db42b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f4db42ba59a857e125e19cbcfda5e0fd6d8e09ca))
+
+- Adds priorities and lens cal paths
+  ([`18e3e24`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/18e3e249cea1ed5bb6febcea80782bf0810edaed))
+
+
 ## v0.9.0 (2025-03-17)
 
 ### Continuous Integration
