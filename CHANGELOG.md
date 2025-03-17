@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.11.0 (2025-03-17)
+
+### Features
+
+- Adds head/tail correlation
+  ([`363add5`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/363add55b098397fa7f257f0bb9297d77228b2e4))
+
+
 ## v0.10.1 (2025-03-17)
 
 ### Bug Fixes
