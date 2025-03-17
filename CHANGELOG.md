@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.11.3 (2025-03-17)
+
+### Bug Fixes
+
+- Allows UCSD IP blocks
+  ([`74fbbdd`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/74fbbdd689f4cc617422d97ce74f3d17313746a2))
+
+- Correct json structure
+  ([`72e54b9`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/72e54b931a668a505b847260bca0df3d35ec34dd))
+
+
 ## v0.11.2 (2025-03-17)
 
 ### Bug Fixes
