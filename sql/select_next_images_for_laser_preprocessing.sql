@@ -4,7 +4,7 @@ WITH label_studio_images AS (
   WHERE laser_task_id IS NOT NULL
 ),
 priority_images AS (
-  SELECT replace(data_paths.path || images.path, '/mnt/fishsense_data_reef/REEF/data', '/home/ubunut/data') as path, images.camera_sn
+  SELECT replace(data_paths.path || images.path, '/mnt/fishsense_data_reef/REEF/data', '/home/ubuntu/data') as path, images.camera_sn
   FROM images
   INNER JOIN canonical_dives ON images.dive = canonical_dives.path
   LEFT JOIN priorities ON canonical_dives.priority = priorities.name
@@ -28,21 +28,18 @@ SELECT json_object(
   'jobs': jobs
 )
 FROM (
-  SELECT json_arrayagg(jobs) AS jobs
+  SELECT json_arrayagg(json_object(
+    'display_name': name,
+    'job_name': 'preprocess',
+    'parameters': params
+  )) as jobs
   FROM (
-    SELECT json_object(
-      'display_name': name,
-      'job_name': 'preprocess',
-      'parameters': params
-    ) as job
-    FROM (
-      SELECT name, json_object (
-        'data': data,
-        'lens-calibration': lens_cal_path,
-        'format': 'JPG',
-        'output': %(output_dir)s
-      ) as params
-      FROM parameters
-    )
-  ) as jobs
+    SELECT name, json_object (
+      'data': data,
+      'lens-calibration': lens_cal_path,
+      'format': 'JPG',
+      'output': %(output_dir)s
+    ) as params
+    FROM parameters
+  )
 )
