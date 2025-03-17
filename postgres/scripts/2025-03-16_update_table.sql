@@ -26,3 +26,18 @@ ADD "slate_id" INTEGER NULL;
 
 ALTER TABLE "canonical_dives"
 ADD "priority" TEXT NOT NULL DEFAULT 'LOW';
+
+CREATE TABLE "priorities" (
+  "idx" integer NOT NULL,
+  "name" TEXT NOT NULL
+);
+
+INSERT INTO "priorities" ("idx", "name")
+VALUES
+  (0, 'HIGH'),
+  (1, 'MEDIUM'),
+  (2, 'LOW')
+;
+
+ALTER TABLE "cameras"
+ADD "lens_cal_path" TEXT NULL;
