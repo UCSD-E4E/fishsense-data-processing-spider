@@ -6,3 +6,6 @@ data_paths = [
 
 [summary]
 interval = "2m"
+
+[label_studio]
+host = 'labeler.e4e.ucsd.edu'
