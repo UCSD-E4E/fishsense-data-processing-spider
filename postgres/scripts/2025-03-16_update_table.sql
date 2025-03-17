@@ -41,3 +41,6 @@ VALUES
 
 ALTER TABLE "cameras"
 ADD "lens_cal_path" TEXT NULL;
+
+ALTER TABLE "images"
+ADD "headtail_task_id" BIGINT NULL;
