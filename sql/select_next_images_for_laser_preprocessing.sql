@@ -1,16 +1,11 @@
-WITH label_studio_images AS (
-  SELECT image_md5, laser_task_id
-  FROM images
-  WHERE laser_task_id IS NOT NULL
-),
-priority_images AS (
+WITH priority_images AS (
   SELECT replace(data_paths.path || images.path, '/mnt/fishsense_data_reef/REEF/data', '/home/ubuntu/data') as path, images.camera_sn
   FROM images
   INNER JOIN canonical_dives ON images.dive = canonical_dives.path
   LEFT JOIN priorities ON canonical_dives.priority = priorities.name
-  LEFT JOIN label_studio_images ON images.image_md5 = label_studio_images.image_md5
+  LEFT JOIN laser_labels ON images.image_md5 = laser_labels.cksum
   LEFT JOIN data_paths ON images.data_path = data_paths.idx
-  WHERE images.laser_task_id IS NULL AND label_studio_images.laser_task_id IS NULL
+  WHERE laser_labels.task_id IS NULL
   ORDER BY priorities.idx
   LIMIT %(limit)s
 ),
