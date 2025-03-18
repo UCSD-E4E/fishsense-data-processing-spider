@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.12.0 (2025-03-18)
+
+### Features
+
+- Adds label_studio import notebooks
+  ([`ae586c9`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ae586c9715558cb54c31ac69a7d84c9d671bcf1d))
+
+
 ## v0.11.3 (2025-03-17)
 
 ### Bug Fixes
