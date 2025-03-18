@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.13.0 (2025-03-18)
+
+### Bug Fixes
+
+- Fixes next laser preprocessing
+  ([`82c1341`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/82c134196aabe6af130d9c8b98a3aec5d73a76d2))
+
+### Features
+
+- Adds next images for head/tail processing report
+  ([`0e102f6`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/0e102f64835f160ffc55937b796788fe21df971a))
+
+
 ## v0.12.2 (2025-03-18)
 
 
