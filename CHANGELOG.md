@@ -1,12 +1,18 @@
 # CHANGELOG
 
 
+## v0.12.2 (2025-03-18)
+
+
 ## v0.12.1 (2025-03-18)
 
 ### Bug Fixes
 
 - Adds task_id column for back ref
   ([`f2e3df4`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f2e3df41a96a6291932102c8f93d9a8982dc5cf7))
+
+- Corrects import for task_id
+  ([`539f0f0`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/539f0f0c2814f3dbdff5e276c91405226e1a4d9b))
 
 
 ## v0.12.0 (2025-03-18)
