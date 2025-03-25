@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict
 
 import platformdirs
+import validators
 from dynaconf import Dynaconf, Validator
 from humanfriendly import parse_timespan
 
@@ -120,6 +121,19 @@ validators = [
         required=True,
         cast=Path,
         condition=lambda x: Path(x).is_file()
+    ),
+    Validator(
+        'label_studio.interval',
+        cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
+        default='1h'
+    ),
+    Validator(
+        'label_studio.host',
+        condition=validators.hostname
+    ),
+    Validator(
+        'label_studio.api_key',
+        cast=str
     )
 ]
 

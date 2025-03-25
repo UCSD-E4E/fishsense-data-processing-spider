@@ -23,6 +23,7 @@ numpy = "<2.0.0"
 label-studio-sdk = "^1.0.10"
 pillow = "^11.1.0"
 pyexiftool = "^0.5.6"
+validators = "^0.34.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.7"

@@ -3848,6 +3848,21 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "validators"
+version = "0.34.0"
+description = "Python Data Validation for Humans™"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "validators-0.34.0-py3-none-any.whl", hash = "sha256:c804b476e3e6d3786fa07a30073a4ef694e617805eb1946ceee3fe5a9b8b1321"},
+    {file = "validators-0.34.0.tar.gz", hash = "sha256:647fe407b45af9a74d245b943b18e6a816acf4926974278f6dd617778e1e781f"},
+]
+
+[package.extras]
+crypto-eth-addresses = ["eth-hash[pycryptodome] (>=0.7.0)"]
+
+[[package]]
 name = "wcwidth"
 version = "0.2.13"
 description = "Measures the displayed width of unicode strings in a terminal"
@@ -4016,4 +4031,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "e46d85eeb0de8ff51a67450d050645d2643a7083ec64cb92fb7d42ec5160d03a"
+content-hash = "0e30594b2717cd783c5007953631f3ab98f07f9006ad2ee374e7528703f28cd5"

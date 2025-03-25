@@ -12,7 +12,15 @@ __all_gauges: Dict[str, Gauge] = {}
 __gauges_lock = Lock()
 __all_infos: Dict[str, Info] = {}
 __infos_lock = Lock()
-__all_summaries: Dict[str, Summary] = {}
+__all_summaries: Dict[str, Summary] = {
+    'query_duration': Summary(
+        name='query_duration',
+        documentation='SQL Query Duration',
+        labelnames=['query'],
+        namespace='e4efs',
+        subsystem='spider'
+    )
+}
 __summariess_lock = Lock()
 __all_histograms: Dict[str, Histogram] = {}
 __histograms_lock = Lock()
@@ -48,7 +56,7 @@ def get_histogram(name: str,
 
 
 def get_summary(name: str,
-                documentation: str,
+                documentation: str = '',
                 labelnames: Iterable[str] = (),
                 namespace: str = '',
                 subsystem: str = '',

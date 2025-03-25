@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from threading import Thread
 from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 import psycopg
 import psycopg.rows
@@ -17,10 +18,13 @@ from fishsense_data_processing_spider.backend import (
     get_image_date)
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
-                                                     settings, get_log_path)
+                                                     get_log_path, settings)
+from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (
     add_thread_to_monitor, get_counter, get_gauge, get_summary,
     remove_thread_from_monitor, system_monitor_thread)
+from fishsense_data_processing_spider.sql_utils import (do_many_query,
+                                                        do_query, load_query)
 
 
 def quick_con() -> psycopg.Connection:
@@ -31,69 +35,7 @@ def quick_con() -> psycopg.Connection:
     """
     return psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row)
 
-def load_query(path: Path) -> str:
-    """Loads query from path
 
-    Args:
-        path (Path): Path to query file
-
-    Returns:
-        str: Query contents
-    """
-    with open(path, 'r', encoding='utf-8') as handle:
-        return handle.read(int(1e9))
-
-
-def do_query(path: Union[Path, str], cur: psycopg.Cursor, params: Optional[Dict[str, Any]] = None):
-    """Convenience function to time and execute a query
-
-    Args:
-        path (Union[Path, str]): Path to query file
-        cur (psycopg.Cursor): Cursor
-        params (Optional[Dict[str, Any]]): Query parameters.  Defaults to None
-    """
-    path = Path(path)
-    query_timer = get_summary(
-        'query_duration',
-        'SQL Query Duration',
-        labelnames=['query'],
-        namespace='e4efs',
-        subsystem='spider'
-    )
-    with query_timer.labels(query=path.stem).time():
-        cur.execute(
-            query=load_query(path),
-            params=params
-        )
-
-
-def do_many_query(path: Union[Path, str],
-                  cur: psycopg.Cursor,
-                  param_seq: List[Dict[str, Any]],
-                  returning: bool = False) -> None:
-    """Convenience function to time and executemany
-
-    Args:
-        path (Union[Path, str]): Path to query file
-        cur (psycopg.Cursor): Cursor
-        param_seq (List[Dict[str, Any]]): Query parameters
-        returning (bool, optional): Flag indicating whether or not this query returns data. Defaults
-        to False.
-    """
-    path = Path(path)
-    query_timer = get_summary(
-        'query_duration',
-        'SQL Query Duration',
-        labelnames=['query'],
-        namespace='e4efs',
-        subsystem='spider'
-    )
-    with query_timer.labels(query=path.stem).time():
-        cur.executemany(
-            query=load_query(path),
-            params_seq=param_seq,
-            returning=returning
-        )
 
 class Service:
     """Service class
@@ -102,6 +44,7 @@ class Service:
     # Main entry point
     def __init__(self):
         self.__validate_data_paths()
+        self.__label_studio = LabelStudioSync()
 
     def __validate_data_paths(self):
         # This isn't working!  not sure why
@@ -472,6 +415,7 @@ class Service:
         )
         summary_thread.start()
         add_thread_to_monitor(summary_thread)
+        self.__label_studio.run()
 
         while True:
             last_run = dt.datetime.now()
