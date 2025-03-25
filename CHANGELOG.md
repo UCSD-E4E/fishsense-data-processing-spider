@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.14.0 (2025-03-25)
+
+### Continuous Integration
+
+- Adds UCSD VPN IP blocks
+  ([`0dc6d58`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/0dc6d58112adeb62afa96d9686789d446955a160))
+
+### Features
+
+- Adds hourly label studio sync
+  ([`5ae461e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/5ae461e230cda4081c6f3355b02858d74b516ea7))
+
+- Adds sync time monitoring
+  ([`25bce78`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/25bce7830745bcded98a5452d4718120ab983330))
+
+
 ## v0.13.0 (2025-03-18)
 
 ### Bug Fixes
