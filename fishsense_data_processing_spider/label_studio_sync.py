@@ -1,6 +1,8 @@
 '''Label Studio Sync
 '''
+import datetime as dt
 import logging
+import time
 import urllib.parse
 from pathlib import Path
 from threading import Event, Thread
@@ -10,8 +12,10 @@ from psycopg.rows import dict_row
 
 from fishsense_data_processing_spider.backend import get_project_export
 from fishsense_data_processing_spider.config import PG_CONN_STR, settings
-from fishsense_data_processing_spider.metrics import add_thread_to_monitor, get_gauge
+from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
+                                                      get_gauge)
 from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
+
 
 class LabelStudioSync:
     """Label Studio Sync thread
@@ -166,6 +170,9 @@ class LabelStudioSync:
 
     def __sync_body(self):
         while not self.stop_event.is_set():
+            last_run = dt.datetime.now()
+            next_run = last_run + settings.label_studio.interval
+
             self.__log.info('Syncing projects')
             try:
                 self.__sync_project_10()
@@ -184,6 +191,9 @@ class LabelStudioSync:
             except Exception as exc: # pylint: disable=broad-except
                 self.__log.exception('Syncing project 19 failed! %s', exc)
             self.__log.info('Projects synced')
+            time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
+            if time_to_sleep > 0:
+                time.sleep(time_to_sleep)
 
     def run(self):
         """Starts the sync threads
