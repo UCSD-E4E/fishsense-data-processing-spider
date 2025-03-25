@@ -186,7 +186,8 @@ def configure_logging():
     logging.Formatter.converter = time.gmtime
 
     logging_levels: Dict[str, str] = {
-        'PIL.TiffImagePlugin': 'INFO'
+        'PIL.TiffImagePlugin': 'INFO',
+        'httpcore.http11': 'INFO',
     }
     for logger_name, level in logging_levels.items():
         logger = logging.getLogger(logger_name)
