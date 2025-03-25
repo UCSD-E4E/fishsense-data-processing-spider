@@ -1,8 +1,9 @@
 services:
   spider:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/ucsd-e4e/fishsense-data-processing-spider:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: fishsense_data_processing_spider
     volumes:
       - fishsense_data_reef:/mnt/fishsense_data_reef:ro
