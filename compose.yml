@@ -7,10 +7,10 @@ services:
     volumes:
       - fishsense_data_reef:/mnt/fishsense_data_reef:ro
       - ./settings.toml:/e4efs/config/settings.toml:ro
+      - ./.secrets.toml:/e4efs/config/.secrets.toml:ro
       - ./data:/e4efs/data:rw
       - ./logs:/e4efs/logs:rw
       - ./cache:/e4efs/cache:rw
-      # - ./.secrets.toml:/.secrets.toml:ro
     environment:
       E4EFS_POSTGRES__USERNAME: postgres
       E4EFS_POSTGRES__HOST: postgres
