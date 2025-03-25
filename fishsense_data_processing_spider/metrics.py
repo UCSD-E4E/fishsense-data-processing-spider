@@ -8,7 +8,15 @@ from typing import Dict, Iterable, List, Literal, Optional, Sequence, Union
 from prometheus_client import (REGISTRY, CollectorRegistry, Counter, Gauge,
                                Histogram, Info, Summary)
 
-__all_gauges: Dict[str, Gauge] = {}
+__all_gauges: Dict[str, Gauge] = {
+    'last_label_studio_sync': Gauge(
+        name='last_label_studio_sync',
+        documentation='Last Label Studio Sync',
+        labelnames=['project'],
+        namespace='e4efs',
+        subsystem='spider'
+    )
+}
 __gauges_lock = Lock()
 __all_infos: Dict[str, Info] = {}
 __infos_lock = Lock()
@@ -105,7 +113,7 @@ def get_counter(name: str,
 
 
 def get_gauge(name: str,
-              documentation: str,
+              documentation: str = '',
               labelnames: Iterable[str] = (),
               namespace: str = '',
               subsystem: str = '',

@@ -10,9 +10,8 @@ from psycopg.rows import dict_row
 
 from fishsense_data_processing_spider.backend import get_project_export
 from fishsense_data_processing_spider.config import PG_CONN_STR, settings
-from fishsense_data_processing_spider.metrics import add_thread_to_monitor
+from fishsense_data_processing_spider.metrics import add_thread_to_monitor, get_gauge
 from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
-
 
 class LabelStudioSync:
     """Label Studio Sync thread
@@ -81,6 +80,8 @@ class LabelStudioSync:
                 param_seq=params_seq
             )
             con.commit()
+        get_gauge('last_label_studio_sync').labels(
+            project=19).set_to_current_time()
 
     def __sync_project_39(self):
         export = get_project_export(
@@ -105,6 +106,8 @@ class LabelStudioSync:
                 param_seq=param_seq
             )
             con.commit()
+        get_gauge('last_label_studio_sync').labels(
+            project=39).set_to_current_time()
 
     def __sync_project_10(self):
         export = get_project_export(
@@ -158,6 +161,8 @@ class LabelStudioSync:
                 param_seq=params_seq
             )
             con.commit()
+        get_gauge('last_label_studio_sync').labels(
+            project=10).set_to_current_time()
 
     def __sync_body(self):
         while not self.stop_event.is_set():
