@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.14.2 (2025-03-25)
+
+### Bug Fixes
+
+- Adds secrets
+  ([`752f9e1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/752f9e1544bb49d8521001d2ef4f32304b6ee30b))
+
+- Silences http11
+  ([`a4f0863`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a4f0863b5265a9fa0ec51853bbb628f321fd1cae))
+
+
 ## v0.14.1 (2025-03-25)
 
 
