@@ -27,12 +27,27 @@ __all_summaries: Dict[str, Summary] = {
         labelnames=['query'],
         namespace='e4efs',
         subsystem='spider'
+    ),
+    'query_result_length': Summary(
+        name='query_result_length',
+        documentation='SQL Query Result Length',
+        labelnames=['query'],
+        namespace='e4efs',
+        subsystem='spider'
     )
 }
 __summariess_lock = Lock()
 __all_histograms: Dict[str, Histogram] = {}
 __histograms_lock = Lock()
-__all_counters: Dict[str, Counter] = {}
+__all_counters: Dict[str, Counter] = {
+    'images_processed': Counter(
+        name='images_processed',
+        documentation='Number of images processed',
+        namespace='e4efs',
+        subsystem='spider',
+        labelnames=['phase']
+    )
+}
 __counters_lock = Lock()
 
 
@@ -88,7 +103,7 @@ def get_summary(name: str,
 
 
 def get_counter(name: str,
-                documentation: str,
+                documentation: str = '',
                 labelnames: Iterable[str] = (),
                 namespace: str = '',
                 subsystem: str = '',

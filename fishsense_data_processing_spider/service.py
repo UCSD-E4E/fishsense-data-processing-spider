@@ -6,7 +6,7 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import numpy as np
 import psycopg
@@ -24,7 +24,7 @@ from fishsense_data_processing_spider.metrics import (
     add_thread_to_monitor, get_counter, get_gauge, get_summary,
     remove_thread_from_monitor, system_monitor_thread)
 from fishsense_data_processing_spider.sql_utils import (do_many_query,
-                                                        do_query, load_query)
+                                                        do_query)
 
 
 def quick_con() -> psycopg.Connection:
@@ -60,22 +60,7 @@ class Service:
                 raise RuntimeError('Data path is not a directory!')
 
     def __discover_dives(self, data_root: Path):
-        __log = logging.getLogger('Dive Discovery')
         images = data_root.rglob('*.ORF', case_sensitive=False)
-        query_timer = get_summary(
-            'query_duration',
-            'SQL Query Duration',
-            labelnames=['query'],
-            namespace='e4efs',
-            subsystem='spider'
-        )
-        image_counter = get_counter(
-            'images_processed',
-            'Number of images processed',
-            namespace='e4efs',
-            subsystem='spider',
-            labelnames=['phase']
-        )
         images_added = get_counter(
             'images_added',
             'Number of images added',
@@ -86,19 +71,23 @@ class Service:
             # Compute checksum
             image_keys = [image.relative_to(
                 data_root).as_posix() for image in image_batch]
-            image_counter.labels(phase='discover_dives').inc(len(image_keys))
+            get_counter('images_processed').labels(
+                phase='discover_dives').inc(len(image_keys))
             with psycopg.connect(PG_CONN_STR,
                                  row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
                 # See if image already is known
-                with query_timer.labels('select_image_by_path').time():
-                    cur.executemany(
-                        query=load_query('sql/select_image_by_path.sql'),
-                        params_seq=[{
+                do_many_query(
+                    path='sql/select_image_by_path.sql',
+                    cur=cur,
+                    param_seq=[
+                        {
                             'path': image_key
-                        } for image_key in image_keys],
-                        returning=True
-                    )
+                        }
+                        for image_key in image_keys
+                    ],
+                    returning=True
+                )
                 results = []
                 while True:
                     results.append(cur.fetchone())
@@ -108,31 +97,28 @@ class Service:
                     if result is not None:
                         continue
                     image = image_batch[idx]
-                    image_key = image_keys[idx]
                     # do heavy lifting
                     cksum = get_file_checksum(image)
                     dive = image.parent.relative_to(data_root).as_posix()
                     # Dive is probably not known yet, add
-                    with query_timer.labels('insert_dive_path').time():
-                        cur.execute(
-                            query=load_query('sql/insert_dive_path.sql'),
-                            params={
-                                'path': dive
-                            }
-                        )
-                        con.commit()
+                    do_query(
+                        path='sql/insert_dive_path.sql',
+                        cur=cur,
+                        params={
+                            'path': dive
+                        }
+                    )
 
-                    with query_timer.labels('insert_image_path_dive_md5').time():
-                        cur.execute(
-                            query=load_query(
-                                'sql/insert_image_path_dive_md5.sql'),
-                            params={
-                                'path': image_key,
-                                'dive': dive,
-                                'cksum': cksum
-                            }
-                        )
-                        con.commit()
+                    do_query(
+                        path='sql/insert_image_path_dive_md5.sql',
+                        cur=cur,
+                        params={
+                            'path': image_keys[idx],
+                            'dive': dive,
+                            'cksum': cksum
+                        }
+                    )
+
                     images_added.inc()
 
     def __process_dirs(self):
@@ -172,115 +158,44 @@ class Service:
             )
 
     def __compute_camera_sns(self, batch_size=1024):
-        query_timer = get_summary(
-            'query_duration',
-            'SQL Query Duration',
-            labelnames=['query'],
-            namespace='e4efs',
-            subsystem='spider'
-        )
-        image_counter = get_counter(
-            'images_processed',
-            'Number of images processed',
-            namespace='e4efs',
-            subsystem='spider',
-            labelnames=['phase']
-        )
-        query_result_length = get_summary(
-            'query_result_length',
-            'SQL Query Result Length',
-            labelnames=['query'],
-            namespace='e4efs',
-            subsystem='spider'
-        )
-        while True:
-            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                    con.cursor() as cur:
-                with query_timer.labels(query='select_images_without_camerasn').time():
-                    cur.execute(
-                        query=load_query(
-                            'sql/select_images_without_camerasn.sql'),
-                        params={
-                            'limit': batch_size
-                        }
-                    )
-                results = cur.fetchall()
-                if len(results) == 0:
-                    return
-                query_result_length.labels(
-                    query='select_images_without_camerasn').observe(len(results))
-                image_counter.labels(phase='camera_sns').inc(len(results))
-                images = {result['cksum']: Path(
-                    result['data_path']) / result['path'] for result in results}
-                serial_numbers = get_camera_sns(images)
-
-                with query_timer.labels(query=f'update_image_camerasn_x{batch_size}').time():
-                    cur.executemany(
-                        query=load_query('sql/update_image_camerasn.sql'),
-                        params_seq=[
-                            {
-                                'camera_sn': camera_sn,
-                                'cksum': cksum
-                            }
-                            for cksum, camera_sn in serial_numbers.items()
-                        ]
-                    )
-                con.commit()
-
-    def __image_dates(self):
-        __log = logging.getLogger('image_dates')
-        query_result_length = get_summary(
-            'query_result_length',
-            'SQL Query Result Length',
-            labelnames=['query'],
-            namespace='e4efs',
-            subsystem='spider'
-        )
-        image_counter = get_counter(
-            'images_processed',
-            'Number of images processed',
-            namespace='e4efs',
-            subsystem='spider',
-            labelnames=['phase']
-        )
-        failed_images: Dict[str, Exception] = {}
         while True:
             with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
                 do_query(
-                    path='sql/select_next_image_for_date.sql',
+                    path='sql/select_images_without_camerasn.sql',
                     cur=cur,
                     params={
-                        'limit': 128
+                        'limit': batch_size
                     }
                 )
                 results = cur.fetchall()
-                query_result_length.labels(
-                    query='select_next_image_for_date').observe(len(results))
                 if len(results) == 0:
-                    break
-                results = {row['cksum']: Path(row['img_path'])
-                           for row in results}
-                date_results: Dict[str, Union[dt.datetime, Exception]] = {cksum: get_image_date(
-                    path) for cksum, path in results.items() if cksum not in failed_images}
-                if len(date_results) == 0:
-                    break
-                dates = {cksum: date
-                         for cksum, date in date_results.items()
-                         if isinstance(date, dt.datetime)}
-                failed_images.update({cksum: date
-                                      for cksum, date in date_results.items()
-                                      if not isinstance(date, dt.datetime)})
-                image_counter.labels(phase='image_dates').inc(len(dates))
+                    return
+                get_summary('query_result_length').labels(
+                    query='select_images_without_camerasn').observe(len(results))
+                get_counter('images_processed').labels(
+                    phase='camera_sns').inc(len(results))
+                images = {result['cksum']: Path(
+                    result['data_path']) / result['path'] for result in results}
+                serial_numbers = get_camera_sns(images)
+
                 do_many_query(
-                    path='sql/update_image_date.sql',
+                    path='sql/update_image_camerasn.sql',
                     cur=cur,
-                    param_seq=[{
-                        'date': date,
-                        'cksum': cksum
-                    } for cksum, date in dates.items()]
+                    param_seq=[
+                        {
+                            'camera_sn': camera_sn,
+                            'cksum': cksum
+                        }
+                        for cksum, camera_sn in serial_numbers.items()
+                    ]
                 )
+
                 con.commit()
+
+    def __image_dates(self):
+        __log = logging.getLogger('image_dates')
+        failed_images = self.__extract_image_dates()
 
         # image dates are now in pg, coalesce per dive
         with psycopg.connect(PG_CONN_STR,
@@ -322,6 +237,48 @@ class Service:
         with open(get_log_path() / 'failed_images.log', 'w', encoding='utf-8') as handle:
             for cksum, exc in failed_images.items():
                 handle.write(f'{cksum}: {exc}\n')
+
+    def __extract_image_dates(self):
+        failed_images: Dict[str, Exception] = {}
+        while True:
+            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
+                    con.cursor() as cur:
+                do_query(
+                    path='sql/select_next_image_for_date.sql',
+                    cur=cur,
+                    params={
+                        'limit': 128
+                    }
+                )
+                results = cur.fetchall()
+                get_summary('query_result_length').labels(
+                    query='select_next_image_for_date').observe(len(results))
+                if len(results) == 0:
+                    break
+                results = {row['cksum']: Path(row['img_path'])
+                           for row in results}
+                date_results: Dict[str, Union[dt.datetime, Exception]] = {cksum: get_image_date(
+                    path) for cksum, path in results.items() if cksum not in failed_images}
+                if len(date_results) == 0:
+                    break
+                dates = {cksum: date
+                         for cksum, date in date_results.items()
+                         if isinstance(date, dt.datetime)}
+                failed_images.update({cksum: date
+                                      for cksum, date in date_results.items()
+                                      if not isinstance(date, dt.datetime)})
+                get_counter('images_processed').labels(
+                    phase='image_dates').inc(len(dates))
+                do_many_query(
+                    path='sql/update_image_date.sql',
+                    cur=cur,
+                    param_seq=[{
+                        'date': date,
+                        'cksum': cksum
+                    } for cksum, date in dates.items()]
+                )
+                con.commit()
+        return failed_images
 
     def __summary_thread(self):
         __log = logging.getLogger('summary')
