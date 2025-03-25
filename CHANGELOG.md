@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v0.14.1 (2025-03-25)
+
+
 ## v0.14.0 (2025-03-25)
+
+### Bug Fixes
+
+- Consolidates metrics and styling
+  ([`c27c915`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c27c9153f74a140d79f7bd747fce45cf0b80ec70))
 
 ### Continuous Integration
 
