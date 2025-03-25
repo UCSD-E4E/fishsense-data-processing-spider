@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.14.3 (2025-03-25)
+
+### Bug Fixes
+
+- Adds sync slowdown
+  ([`f384fd6`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f384fd6378a007a0349ea2492dd49c756b9bd41a))
+
+
 ## v0.14.2 (2025-03-25)
 
 ### Bug Fixes
