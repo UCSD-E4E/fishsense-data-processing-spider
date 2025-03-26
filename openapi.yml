@@ -1,0 +1,187 @@
+openapi: 3.1.0
+info:
+  title: Fishsense Data Processing Orchestrator
+  description: |-
+    Fishsense Data Processing Orchestrator
+
+  contact:
+    email: e4e@ucsd.edu
+  license:
+    name: UCSD Non-commercial
+    url: https://raw.githubusercontent.com/UCSD-E4E/fishsense-data-processing-spider/refs/heads/main/LICENSE
+  version: 0.0.0
+externalDocs:
+  description: Find out more about the Fishsense Data Processing Orchestrator
+  url: https://github.com/UCSD-E4E/fishsense-data-processing-spider
+servers:
+  - url: http://fabricant.ucsd.edu:8083
+tags:
+  - name: job
+    description: Job management
+paths:
+  /retrieve_batch:
+    get:
+      tags:
+        - job
+      summary: Retrieves a new batch of jobs for processing
+      description: Retrieves a new batch of jobs for processing
+      operationId: getJob
+      parameters: 
+        - name: jobType
+          in: query
+          required: true
+          schema: 
+            type: string
+            enum: 
+              - preprocess
+              - preprocess_with_laser
+        - name: nImages
+          description: Maximum number of images
+          in: query
+          schema:
+            type: integer
+            default: 1000
+        - name: worker
+          in: query
+          description: Worker identifier
+          schema:
+            type: string
+        - name: jobId
+          description: Job batch identifier
+          in: query
+          schema:
+            type: string
+      responses: 
+        '200':
+          description: Batch for processing
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/JobDefinition'
+        '400':
+          description: Invalid input
+  /update_job_status:
+    put:
+      tags:
+        - job
+      summary: Update job ID status
+      operationId: updateJob
+      parameters:
+        - name: jobId
+          required: true
+          in: query
+          schema:
+            type: string
+            description: Job batch identifier
+        - name: worker
+          required: true
+          in: query
+          schema:
+            type: string
+            description: Worker identifier
+        - name: status
+          required: true
+          in: query
+          schema:
+            type: string
+            enum:
+              - in_progress
+              - cancelled
+              - failed
+        - name: progress
+          in: query
+          schema:
+            type: integer
+            description: Percentage complete (0-100)
+
+        
+  /process_fsl:
+    put:
+      tags:
+        - job
+      summary: Submit a new job for processing
+      description: Submits a new job for processing in the queue
+      operationId: addJob
+      requestBody:
+        description: Create a new job for processing
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobDefinition'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobIds'
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+      # security:
+      #   - petstore_auth:
+      #       - write:pets
+      #       - read:pets
+
+          
+
+components:
+  schemas:
+    JobIds:
+      type: object
+      properties:
+        job_ids:
+          type: array
+          items:
+            type: string
+            description: Job IDs
+    JobDefinition:
+      type: object
+      properties:
+        job:
+          type: array
+          items:
+            type: object
+            properties:
+              display_name:
+                type: string
+              job_name:
+                type: string
+                enum:
+                  - preprocess
+                  - preprocess_with_laser
+              parameters:
+                type: object
+                properties:
+                  overwrite:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: string
+                  lens-calibration:
+                    type: string
+                  format:
+                    type: string
+                    enum:
+                      - JPG
+                      - PNG
+                  output:
+                    type: string
+
+
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
