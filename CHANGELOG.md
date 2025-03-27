@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.15.0 (2025-03-27)
+
+### Chores
+
+- Switches to ghcr image
+  ([`c164a82`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c164a8228e14962d0e7ed384d604f8290bea46ee))
+
+### Documentation
+
+- Adds orchestrator
+  ([`b5d0abb`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b5d0abb0115b959c9edb89194aa46734c139647b))
+
+### Features
+
+- Adds spin_slate column
+  ([`fe4503c`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/fe4503c2c967f47845f2ce5d90c2cbc40a3a0555))
+
+
 ## v0.14.3 (2025-03-25)
 
 ### Bug Fixes
