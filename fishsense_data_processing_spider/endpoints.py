@@ -91,15 +91,26 @@ class VersionHandler(BaseHandler):
 
 
 class RetrieveBatch(BaseHandler):
+    """Retrieves a batch of jobs
+
+    """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
 
     def initialize(self, key_store: KeyStore):
+        """Initializes the handler
+
+        Args:
+            key_store (KeyStore): API Key store
+        """
         # pylint: disable=attribute-defined-outside-init
         # This is the correct pattern for tornado
         self.__key_store = key_store
 
     async def get(self, *_, **__) -> None:
+        """HTTP Get entry point
+        """
         api_key = self.request.headers.get('api_key')
-        if not self.__key_store.authorize_key(api_key):
+        if not api_key or not self.__key_store.authorize_key(api_key):
             self.set_status(HTTPStatus.UNAUTHORIZED)
+            self.finish()
             return

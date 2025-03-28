@@ -9,6 +9,8 @@ from fishsense_data_processing_spider.web_auth import KeyStore
 
 
 class CliService(rpyc.Service):
+    """CLI RPyC Service
+    """
     def __init__(
         self,
         key_store: KeyStore

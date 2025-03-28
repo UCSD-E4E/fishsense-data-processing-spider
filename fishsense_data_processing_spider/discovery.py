@@ -24,6 +24,7 @@ from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
 class Crawler:
     """Image crawler
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  data_paths: List[Union[Path, str]],
                  conn_str: str,
