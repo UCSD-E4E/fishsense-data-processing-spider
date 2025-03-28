@@ -1,30 +1,28 @@
 '''Main Service Entry Point
 '''
+import asyncio
 import datetime as dt
-import itertools
 import logging
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union
 
-import numpy as np
 import psycopg
 import psycopg.rows
+import pytz
+import tornado
 from prometheus_client import start_http_server
 
-from fishsense_data_processing_spider.backend import (
-    get_camera_sns, get_dive_checksum_from_query, get_file_checksum,
-    get_image_date)
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
-                                                     get_log_path, settings)
+                                                     settings)
+from fishsense_data_processing_spider.discovery import Crawler
+from fishsense_data_processing_spider.endpoints import (HomePageHandler,
+                                                        VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
-from fishsense_data_processing_spider.metrics import (
-    add_thread_to_monitor, get_counter, get_gauge, get_summary,
-    remove_thread_from_monitor, system_monitor_thread)
-from fishsense_data_processing_spider.sql_utils import (do_many_query,
-                                                        do_query)
+from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
+                                                      get_gauge, get_summary,
+                                                      system_monitor_thread)
 
 
 def quick_con() -> psycopg.Connection:
@@ -36,15 +34,38 @@ def quick_con() -> psycopg.Connection:
     return psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row)
 
 
-
 class Service:
     """Service class
     """
     # pylint: disable=too-few-public-methods
     # Main entry point
+
     def __init__(self):
         self.__validate_data_paths()
         self.__label_studio = LabelStudioSync()
+        self.__crawler = Crawler(
+            data_paths=[
+                Path(data_path)
+                for data_path in settings.scraper.data_paths
+            ],
+            conn_str=PG_CONN_STR,
+            interval=settings.scraper.interval,
+        )
+
+        self.stop_event = asyncio.Event()
+        start_time = dt.datetime.now(tz=pytz.UTC)
+
+        self.__summary_thread = Thread(
+            target=self.__summary_loop,
+            name='summary_thread',
+            daemon=True
+        )
+        add_thread_to_monitor(self.__summary_thread)
+
+        self.__webapp = tornado.web.Application([
+            (r'/()', HomePageHandler, {'start_time': start_time}),
+            (r'/version()', VersionHandler)
+        ])
 
     def __validate_data_paths(self):
         # This isn't working!  not sure why
@@ -59,228 +80,7 @@ class Service:
             if not data_path.is_dir():
                 raise RuntimeError('Data path is not a directory!')
 
-    def __discover_dives(self, data_root: Path):
-        images = data_root.rglob('*.ORF', case_sensitive=False)
-        images_added = get_counter(
-            'images_added',
-            'Number of images added',
-            namespace='e4efs',
-            subsystem='spider'
-        )
-        for image_batch in itertools.batched(images, n=128):
-            # Compute checksum
-            image_keys = [image.relative_to(
-                data_root).as_posix() for image in image_batch]
-            get_counter('images_processed').labels(
-                phase='discover_dives').inc(len(image_keys))
-            with psycopg.connect(PG_CONN_STR,
-                                 row_factory=psycopg.rows.dict_row) as con, \
-                    con.cursor() as cur:
-                # See if image already is known
-                do_many_query(
-                    path='sql/select_image_by_path.sql',
-                    cur=cur,
-                    param_seq=[
-                        {
-                            'path': image_key
-                        }
-                        for image_key in image_keys
-                    ],
-                    returning=True
-                )
-                results = []
-                while True:
-                    results.append(cur.fetchone())
-                    if not cur.nextset():
-                        break
-                for idx, result in enumerate(results):
-                    if result is not None:
-                        continue
-                    image = image_batch[idx]
-                    # do heavy lifting
-                    cksum = get_file_checksum(image)
-                    dive = image.parent.relative_to(data_root).as_posix()
-                    # Dive is probably not known yet, add
-                    do_query(
-                        path='sql/insert_dive_path.sql',
-                        cur=cur,
-                        params={
-                            'path': dive
-                        }
-                    )
-
-                    do_query(
-                        path='sql/insert_image_path_dive_md5.sql',
-                        cur=cur,
-                        params={
-                            'path': image_keys[idx],
-                            'dive': dive,
-                            'cksum': cksum
-                        }
-                    )
-
-                    images_added.inc()
-
-    def __process_dirs(self):
-        for data_dir in settings.scraper.data_paths:
-            data_path = Path(data_dir)
-            self.__discover_dives(data_path)
-
-        with psycopg.connect(PG_CONN_STR,
-                             row_factory=psycopg.rows.dict_row) as con, \
-                con.cursor() as cur:
-            # For each dive
-            do_query('sql/select_all_dives.sql', cur)
-            dives = [row['path'] for row in cur.fetchall()]
-            for dive_path in dives:
-                do_query(
-                    path='sql/select_images_in_dive.sql',
-                    cur=cur,
-                    params={
-                        'dive': dive_path
-                    }
-                )
-                result = cur.fetchall()
-                cksum = get_dive_checksum_from_query(result)
-                do_query(
-                    path='sql/update_dive_cksum.sql',
-                    cur=cur,
-                    params={
-                        'cksum': cksum,
-                        'path': dive_path
-                    }
-                )
-
-            # Consolidate canonical dives
-            do_query(
-                path='sql/insert_unique_dives.sql',
-                cur=cur
-            )
-
-    def __compute_camera_sns(self, batch_size=1024):
-        while True:
-            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                    con.cursor() as cur:
-                do_query(
-                    path='sql/select_images_without_camerasn.sql',
-                    cur=cur,
-                    params={
-                        'limit': batch_size
-                    }
-                )
-                results = cur.fetchall()
-                if len(results) == 0:
-                    return
-                get_summary('query_result_length').labels(
-                    query='select_images_without_camerasn').observe(len(results))
-                get_counter('images_processed').labels(
-                    phase='camera_sns').inc(len(results))
-                images = {result['cksum']: Path(
-                    result['data_path']) / result['path'] for result in results}
-                serial_numbers = get_camera_sns(images)
-
-                do_many_query(
-                    path='sql/update_image_camerasn.sql',
-                    cur=cur,
-                    param_seq=[
-                        {
-                            'camera_sn': camera_sn,
-                            'cksum': cksum
-                        }
-                        for cksum, camera_sn in serial_numbers.items()
-                    ]
-                )
-
-                con.commit()
-
-    def __image_dates(self):
-        __log = logging.getLogger('image_dates')
-        failed_images = self.__extract_image_dates()
-
-        # image dates are now in pg, coalesce per dive
-        with psycopg.connect(PG_CONN_STR,
-                             row_factory=psycopg.rows.dict_row) as con, \
-                con.cursor() as cur:
-            # For each dive
-            do_query('sql/select_all_dives.sql', cur)
-            dives = [row['path'] for row in cur.fetchall()]
-            for dive_path in dives:
-                do_query(
-                    path='sql/query_dates_from_dive.sql',
-                    cur=cur,
-                    params={
-                        'dive': dive_path
-                    }
-                )
-                results = cur.fetchall()
-                dates = [dt.datetime.fromisoformat(
-                    row['date']) for row in results if row['date'] is not None]
-                invalid_dates = (len(dates) != len(results))
-                multiple_dates = len(dates) > 1
-                if len(dates) == 0:
-                    # no images, this is weird...
-                    __log.warning('Dive %s has no images???', dive_path)
-                    continue
-                mean_date = dt.date.fromtimestamp(
-                    np.mean([date.timestamp() for date in dates]))
-                do_query(
-                    path='sql/update_dive_dates.sql',
-                    cur=cur,
-                    params={
-                        'date': mean_date.isoformat(),
-                        'invalid_image': invalid_dates,
-                        'multiple_date': multiple_dates,
-                        'path': dive_path
-                    }
-                )
-        # report failed images
-        with open(get_log_path() / 'failed_images.log', 'w', encoding='utf-8') as handle:
-            for cksum, exc in failed_images.items():
-                handle.write(f'{cksum}: {exc}\n')
-
-    def __extract_image_dates(self):
-        failed_images: Dict[str, Exception] = {}
-        while True:
-            with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                    con.cursor() as cur:
-                do_query(
-                    path='sql/select_next_image_for_date.sql',
-                    cur=cur,
-                    params={
-                        'limit': 128
-                    }
-                )
-                results = cur.fetchall()
-                get_summary('query_result_length').labels(
-                    query='select_next_image_for_date').observe(len(results))
-                if len(results) == 0:
-                    break
-                results = {row['cksum']: Path(row['img_path'])
-                           for row in results}
-                date_results: Dict[str, Union[dt.datetime, Exception]] = {cksum: get_image_date(
-                    path) for cksum, path in results.items() if cksum not in failed_images}
-                if len(date_results) == 0:
-                    break
-                dates = {cksum: date
-                         for cksum, date in date_results.items()
-                         if isinstance(date, dt.datetime)}
-                failed_images.update({cksum: date
-                                      for cksum, date in date_results.items()
-                                      if not isinstance(date, dt.datetime)})
-                get_counter('images_processed').labels(
-                    phase='image_dates').inc(len(dates))
-                do_many_query(
-                    path='sql/update_image_date.sql',
-                    cur=cur,
-                    param_seq=[{
-                        'date': date,
-                        'cksum': cksum
-                    } for cksum, date in dates.items()]
-                )
-                con.commit()
-        return failed_images
-
-    def __summary_thread(self):
+    def __summary_loop(self):
         __log = logging.getLogger('summary')
         counts = get_gauge(
             'count',
@@ -318,107 +118,28 @@ class Service:
             if time_to_sleep > 0:
                 time.sleep(time_to_sleep)
 
-    def __process_canonical_dives(self):
-        with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
-                con.cursor() as cur:
-            do_query(
-                path='sql/select_canonical_dives.sql',
-                cur=cur
-            )
-            results = cur.fetchall()
-        data_roots = list({row['data_path'] for row in results})
-        dives = {Path(data_root): [Path(row['path'])
-                                   for row in results
-                                   if row['data_path'] == data_root]
-                 for data_root in data_roots}
-        multiple_camera_dives: List[Path] = []
-        for dive in itertools.chain(*dives.values()):
-            with quick_con() as con, con.cursor() as cur:
-                do_query(
-                    path='sql/select_cameras_per_dive.sql',
-                    cur=cur,
-                    params={
-                        'dive': dive.as_posix()
-                    }
-                )
-                camera_idx = [row['idx'] for row in cur.fetchall()]
-                if len(camera_idx) > 1:
-                    multiple_camera_dives.append(dive)
-                    continue
-                if len(camera_idx) == 0:
-                    # ????
-                    continue
-                do_query(
-                    path='sql/update_cdive_camera.sql',
-                    cur=cur,
-                    params={
-                        'camera': camera_idx[0],
-                        'path': dive.as_posix()
-                    }
-                )
-        with open(get_log_path() / 'multiple_camera_dives.log', 'w', encoding='utf-8') as handle:
-            for dive in multiple_camera_dives:
-                handle.write(f'{dive.as_posix()}\n')
-
-    def run(self):
+    async def run(self):
         """Main entry point
         """
         start_http_server(9090)
         system_monitor_thread.start()
-        summary_thread = Thread(
-            target=self.__summary_thread,
-            name='summary_thread',
-            daemon=True
-        )
-        summary_thread.start()
-        add_thread_to_monitor(summary_thread)
+        self.__summary_thread.start()
         self.__label_studio.run()
 
-        while True:
-            last_run = dt.datetime.now()
-            next_run: dt.datetime = last_run + settings.scraper.interval
-            process_dir_thread = Thread(
-                target=self.__process_dirs, name='process_dirs')
-            add_thread_to_monitor(process_dir_thread)
-            camera_sn_thread = Thread(
-                target=self.__compute_camera_sns, name='camera_sns')
-            add_thread_to_monitor(camera_sn_thread)
+        self.__crawler.run()
+        self.__webapp.listen(80)
+        await self.stop_event.wait()
 
-            dates_thread = Thread(
-                target=self.__image_dates,
-                name='image_dates'
-            )
-            add_thread_to_monitor(dates_thread)
+        self.__crawler.stop()
+        self.__label_studio.stop()
 
-            process_dir_thread.start()
-            camera_sn_thread.start()
-            dates_thread.start()
-
-            process_dir_thread.join()
-            remove_thread_from_monitor(process_dir_thread)
-            camera_sn_thread.join()
-            remove_thread_from_monitor(camera_sn_thread)
-            dates_thread.join()
-            remove_thread_from_monitor(dates_thread)
-
-            cdive_process_thread = Thread(
-                target=self.__process_canonical_dives,
-                name='process_cdive'
-            )
-            add_thread_to_monitor(cdive_process_thread)
-            cdive_process_thread.start()
-            cdive_process_thread.join()
-            remove_thread_from_monitor(cdive_process_thread)
-
-            time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
-            if time_to_sleep > 0:
-                time.sleep(time_to_sleep)
 
 def main():
     """Main entry point
     """
     configure_logging()
-    Service().run()
+    asyncio.run(Service().run())
+
 
 if __name__ == '__main__':
     main()

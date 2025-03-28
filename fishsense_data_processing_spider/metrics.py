@@ -34,19 +34,46 @@ __all_summaries: Dict[str, Summary] = {
         labelnames=['query'],
         namespace='e4efs',
         subsystem='spider'
-    )
+    ),
+    'request_timing': Summary(
+        name='request_timing',
+        documentation='Request timing',
+        labelnames=['endpoint'],
+        namespace='e4efs',
+        subsystem='worker',
+    ),
 }
 __summariess_lock = Lock()
 __all_histograms: Dict[str, Histogram] = {}
 __histograms_lock = Lock()
 __all_counters: Dict[str, Counter] = {
+    'images_added': Counter(
+        'images_added',
+        'Number of images added',
+        namespace='e4efs',
+        subsystem='spider'
+    ),
     'images_processed': Counter(
         name='images_processed',
         documentation='Number of images processed',
         namespace='e4efs',
         subsystem='spider',
         labelnames=['phase']
-    )
+    ),
+    'request_call': Counter(
+        name='request_call',
+        documentation='Request count',
+        labelnames=['endpoint'],
+        namespace='e4efs',
+        subsystem='spider'
+    ),
+    'request_result': Counter(
+        name='request_result',
+        documentation='Request result',
+        labelnames=['endpoint', 'code'],
+        namespace='e4efs',
+        subsystem='spider'
+    ),
 }
 __counters_lock = Lock()
 

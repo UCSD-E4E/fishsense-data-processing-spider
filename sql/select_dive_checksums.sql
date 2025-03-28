@@ -1,0 +1,1 @@
+SELECT DISTINCT checksum FROM dives;
