@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.16.0 (2025-03-28)
+
+### Features
+
+- Adds web service, fixes canonical dives
+  ([`8df03f4`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/8df03f4184bb59026807a720b70d4ecffd3e264e))
+
+
 ## v0.15.0 (2025-03-27)
 
 ### Chores
