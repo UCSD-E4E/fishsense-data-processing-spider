@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.17.1 (2025-03-28)
+
+### Bug Fixes
+
+- Fixes auth
+  ([`0be4345`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/0be4345b4fbd5176c622fca57481402ad141e830))
+
+### Code Style
+
+- Allows for some issues
+  ([`8eaec69`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/8eaec69ad31d876e4da163bbc7cf0d617d8aed1a))
+
+
 ## v0.17.0 (2025-03-28)
 
 ### Features
