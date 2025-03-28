@@ -9,7 +9,7 @@ from tornado.web import RequestHandler
 
 from fishsense_data_processing_spider import __version__
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
-
+from fishsense_data_processing_spider.web_auth import KeyStore
 # pylint: disable=abstract-method
 # This is typical behavior for tornado
 
@@ -88,3 +88,18 @@ class VersionHandler(BaseHandler):
         self.write(json.dumps({
             'version': version('fishsense_data_processing_worker')
         }))
+
+
+class RetrieveBatch(BaseHandler):
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+
+    def initialize(self, key_store: KeyStore):
+        # pylint: disable=attribute-defined-outside-init
+        # This is the correct pattern for tornado
+        self.__key_store = key_store
+
+    async def get(self, *_, **__) -> None:
+        api_key = self.request.headers.get('api_key')
+        if not self.__key_store.authorize_key(api_key):
+            self.set_status(HTTPStatus.UNAUTHORIZED)
+            return

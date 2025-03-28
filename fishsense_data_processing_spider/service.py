@@ -12,17 +12,21 @@ import psycopg.rows
 import pytz
 import tornado
 from prometheus_client import start_http_server
+from rpyc.utils.server import ThreadedServer
 
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (HomePageHandler,
-                                                        VersionHandler)
+                                                        VersionHandler,
+                                                        RetrieveBatch)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
                                                       system_monitor_thread)
+from fishsense_data_processing_spider.rpyc_endpoint import CliService
+from fishsense_data_processing_spider.web_auth import KeyStore
 
 
 def quick_con() -> psycopg.Connection:
@@ -62,9 +66,25 @@ class Service:
         )
         add_thread_to_monitor(self.__summary_thread)
 
+        self.__keystore = KeyStore(settings.web_api.key_store)
+
+        self.rpyc_endpoint = ThreadedServer(
+            CliService(
+                key_store=self.__keystore
+            ),
+            port=18861
+        )
+        self.rpyc_thread = Thread(
+            target=self.rpyc_endpoint.start,
+            name='rpyc',
+            daemon=True
+        )
+        add_thread_to_monitor(self.rpyc_thread)
+
         self.__webapp = tornado.web.Application([
             (r'/()', HomePageHandler, {'start_time': start_time}),
-            (r'/version()', VersionHandler)
+            (r'/version()', VersionHandler),
+            (r'/retrieve_batch()', RetrieveBatch, {'key_store': self.__keystore})
         ])
 
     def __validate_data_paths(self):
@@ -122,12 +142,15 @@ class Service:
         """Main entry point
         """
         start_http_server(9090)
+        self.__webapp.listen(80)
+
         system_monitor_thread.start()
         self.__summary_thread.start()
-        self.__label_studio.run()
+        self.rpyc_thread.start()
 
+        self.__label_studio.run()
         self.__crawler.run()
-        self.__webapp.listen(80)
+
         await self.stop_event.wait()
 
         self.__crawler.stop()

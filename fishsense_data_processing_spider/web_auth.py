@@ -91,7 +91,10 @@ class KeyStore:
         return new_key
 
     def __hash_key(self, new_key: str) -> str:
-        return hashlib.pbkdf2_hmac('sha256', new_key, self.__salt, self.__iterations)
+        return hashlib.pbkdf2_hmac('sha256',
+                                   new_key.encode(),
+                                   self.__salt.encode(),
+                                   self.__iterations)
 
     def authorize_key(self, key: str) -> bool:
         """Checks if the key is authorized

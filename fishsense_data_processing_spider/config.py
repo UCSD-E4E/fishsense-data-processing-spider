@@ -134,6 +134,10 @@ validators = [
     Validator(
         'label_studio.api_key',
         cast=str
+    ),
+    Validator(
+        'web_api.key_store',
+        cast=Path
     )
 ]
 
