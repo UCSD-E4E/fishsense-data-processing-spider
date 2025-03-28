@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.17.0 (2025-03-28)
+
+### Features
+
+- Adds initial authorized endpoint
+  ([`4d71b1a`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/4d71b1ab2360edd52ceba78aeb968cca6958f6ec))
+
+
 ## v0.16.0 (2025-03-28)
 
 ### Features
