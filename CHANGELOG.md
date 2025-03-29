@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.18.0 (2025-03-29)
+
+### Features
+
+- Adds slate_images reference
+  ([`a0996f8`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a0996f8c03342602009fac4fa216486451a24962))
+
+
 ## v0.17.1 (2025-03-28)
 
 ### Bug Fixes
