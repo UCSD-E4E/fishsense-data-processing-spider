@@ -3,6 +3,7 @@
 import contextlib
 import datetime as dt
 import hashlib
+import logging
 import secrets
 import sqlite3
 from pathlib import Path
@@ -17,6 +18,7 @@ class KeyStore:
 
     def __init__(self,
                  path: Path):
+        self.__log = logging.getLogger('keystore')
         self.__path = path
         self.__salt: str = None
         self.__iterations: int = self.ITERATIONS
@@ -106,6 +108,7 @@ class KeyStore:
             bool: True if authorized, otherwise False
         """
         hash_to_verify = self.__hash_key(key)
+        self.__log.debug('Computed hash %s', hash_to_verify)
         with contextlib.closing(sqlite3.connect(self.__path)) as con, \
                 contextlib.closing(con.cursor()) as cur:
             cur.execute(
@@ -116,8 +119,10 @@ class KeyStore:
             )
             result: Optional[Tuple[int]] = cur.fetchone()
         if not result:
+            self.__log.info('Key failed - not present')
             return False
         expires = dt.datetime.fromtimestamp(result[0])
         if expires < dt.datetime.now():
+            self.__log.info('Key failed - expired')
             return False
         return True

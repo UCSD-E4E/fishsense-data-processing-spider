@@ -13,18 +13,19 @@ import pytz
 import tornado
 from prometheus_client import start_http_server
 from rpyc.utils.server import ThreadedServer
+from tornado.routing import URLSpec
 
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.discovery import Crawler
-from fishsense_data_processing_spider.endpoints import (HomePageHandler,
-                                                        VersionHandler,
-                                                        RetrieveBatch)
+from fishsense_data_processing_spider.endpoints import (
+    HomePageHandler, JobStatusHandler, RetrievePreprocessBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
                                                       system_monitor_thread)
+from fishsense_data_processing_spider.orchestrator import Orchestrator
 from fishsense_data_processing_spider.rpyc_endpoint import CliService
 from fishsense_data_processing_spider.web_auth import KeyStore
 
@@ -81,10 +82,34 @@ class Service:
         )
         add_thread_to_monitor(self.rpyc_thread)
 
+        self.__job_orchestrator = Orchestrator(PG_CONN_STR)
+
         self.__webapp = tornado.web.Application([
-            (r'/()', HomePageHandler, {'start_time': start_time}),
-            (r'/version()', VersionHandler),
-            (r'/retrieve_batch()', RetrieveBatch, {'key_store': self.__keystore})
+            URLSpec(
+                pattern=r'/()',
+                handler=HomePageHandler,
+                kwargs={'start_time': start_time}
+            ),
+            URLSpec(
+                pattern=r'/version()',
+                handler=VersionHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/jobs/preprocess/retrieve_batch$',
+                handler=RetrievePreprocessBatch,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'orchestrator': self.__job_orchestrator
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/jobs/status$',
+                handler=JobStatusHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'orchestrator': self.__job_orchestrator
+                }
+            )
         ])
 
     def __validate_data_paths(self):

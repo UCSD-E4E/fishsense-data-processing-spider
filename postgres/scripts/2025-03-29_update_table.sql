@@ -12,6 +12,6 @@ CREATE TABLE jobs (
 COMMENT ON COLUMN jobs.job_status IS '0=pending, 1=in_progress, 2=cancelled, 3=failed';
 
 ALTER TABLE images
-ADD COLUMN preprocess_job_id uuid NULL REFERENCES jobs(job_id);
+ADD COLUMN preprocess_job_id uuid NULL REFERENCES jobs(job_id) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE images
-ADD COLUMN preprocess_laser_job_id uuid NULL REFERENCES jobs(job_id);
+ADD COLUMN preprocess_laser_job_id uuid NULL REFERENCES jobs(job_id) ON DELETE SET NULL ON UPDATE CASCADE;

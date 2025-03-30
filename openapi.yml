@@ -18,25 +18,147 @@ servers:
 tags:
   - name: job
     description: Job management
+  - name: data
+    description: Data access
+  - name: v1
+    description: API v1
 paths:
-  /retrieve_batch:
+  /api/v1/data/raw/{checksum}:
     get:
       tags:
+        - v1
+        - data
+      summary: Retrieves the RAW binary blob represented by the data checksum
+      operationId: getRawFile
+      parameters:
+        - name: checksum
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Raw file content
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+      security:
+        - api_key: []
+  /api/v1/data/preprocess_jpeg/{checksum}:
+    get:
+      tags:
+        - v1
+        - data
+      summary: Gets the preprocessed JPEG for the RAW file represented by the checksum
+      operationId: getPreprocessedFrame
+      parameters:
+        - name: checksum
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Preprocessed image
+          content:
+            image/jpeg:
+              schema:
+                format: binary
+        '404':
+          description: |
+            Image not found.  This is either because the RAW file does not exist, or
+            because the JPEG has not been created
+        '401':
+          description: Unauthorized
+    put:
+      tags:
+        - v1
+        - data
+      summary: Puts a preprocessed JPEG for the RAW file represented by the checksum
+      operationId: putPreprocessedFrame
+      parameters:
+        - name: checksum
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Operation success
+  /api/v1/data/laser_jpeg/{checksum}:
+    get:
+      tags:
+        - data
+        - v1
+      summary: Retrieves the laser JPEG for the RAW file represented by the checksum
+      operationId: getLaserFrame
+      parameters:
+        - name: checksum
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Preprocessed image with laser
+          content:
+            image/jpeg:
+              schema:
+                format: binary
+        '404':
+          description: |
+            Image not found.  This is either because the RAW file does not exist, or because the
+            JPEG has not been created.
+        '401':
+          description: Unauthorized
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+      summary: Puts the laser JPEG for the RAW file file represented by the checksum
+      operationId: putLaserFrame
+      parameters:
+        - name: checksum
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JPEG accepted
+        '404':
+          description: RAW file does not exist
+        '401':
+          description: Unauthorized
+        
+  /api/v1/jobs/preprocess/retrieve_batch:
+    post:
+      tags:
         - job
+        - v1
       summary: Retrieves a new batch of jobs for processing
       description: Retrieves a new batch of jobs for processing
       operationId: getJob
       parameters: 
-        - name: jobType
-          in: query
-          required: true
-          schema: 
-            type: string
-            enum: 
-              - preprocess
-              - preprocess_with_laser
         - name: nImages
-          description: Maximum number of images
+          description: Maximum number of total images in processing job
           in: query
           schema:
             type: integer
@@ -46,27 +168,50 @@ paths:
           description: Worker identifier
           schema:
             type: string
-        - name: jobId
-          description: Job batch identifier
-          in: query
-          schema:
-            type: string
       responses: 
         '200':
           description: Batch for processing
           content: 
             application/json: 
               schema: 
-                $ref: '#/components/schemas/JobDefinition'
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        jobId:
+                          type: string
+                          examples:
+                            - 517c4ae7-cd6d-4ea7-a180-a6f81c4ea52f
+                        frameIds:
+                          type: array
+                          examples:
+                            - [
+                                'f60dfbecc701d929f72047b2a410a3aa',
+                                '850314b1302d7277f5c363b243fe2c0c',
+                                '2f94aaed68d6c7515f1ba80523e2f130',
+                                'e5f52612820497165b9686d7b534c5e6',
+                                'b045035545018822435d0c02eb782a61',
+                                '5a0d1ae1d60117d94f2ddf3f4074bae8'
+                              ]
+                          items:
+                            type: string
+                        cameraId:
+                          type: integer
+                          examples:
+                            - 1
         '400':
           description: Invalid input
       security:
         - api_key: []
       
-  /update_job_status:
+  /api/v1/jobs/status:
     put:
       tags:
         - job
+        - v1
       summary: Update job ID status
       operationId: updateJob
       parameters:
@@ -76,12 +221,6 @@ paths:
           schema:
             type: string
             description: Job batch identifier
-        - name: worker
-          required: true
-          in: query
-          schema:
-            type: string
-            description: Worker identifier
         - name: status
           required: true
           in: query
@@ -96,39 +235,11 @@ paths:
           schema:
             type: integer
             description: Percentage complete (0-100)
-
-        
-  /process_fsl:
-    put:
-      tags:
-        - job
-      summary: Submit a new job for processing
-      description: Submits a new job for processing in the queue
-      operationId: addJob
-      requestBody:
-        description: Create a new job for processing
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobDefinition'
-        required: true
+      security:
+        - api_key: []
       responses:
         '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobIds'
-        '400':
-          description: Invalid input
-        '422':
-          description: Validation exception
-      # security:
-      #   - petstore_auth:
-      #       - write:pets
-      #       - read:pets
-
-          
+          description: Success
 
 components:
   schemas:
