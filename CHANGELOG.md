@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.19.0 (2025-03-30)
+
+### Features
+
+- Adds jobs tables
+  ([`348e143`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/348e143884ff22a819c6703015d4eab38d0e8e81))
+
+- Adds preprocess job flow
+  ([`ddc2c02`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ddc2c028632264d73ebf288f05e86f91bca5f1ae))
+
+
 ## v0.18.0 (2025-03-29)
 
 ### Features
