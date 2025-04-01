@@ -238,6 +238,9 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '401':
           $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+
   /api/v1/data/head_tail/{checksum}:
     get:
       tags:
@@ -291,6 +294,8 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '401':
           $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
   /api/v1/data/depth_cal/{checksum}:
     get:
       tags:
@@ -344,6 +349,9 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '401':
           $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+
   /api/v1/data/lens_cal/{cameraId}:
     get:
       tags:
@@ -409,6 +417,8 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '401':
           $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
 
   /api/v1/jobs/preprocess/retrieve_batch:
     post:
