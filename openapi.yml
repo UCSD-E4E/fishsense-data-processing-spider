@@ -440,6 +440,12 @@ paths:
           description: Worker identifier
           schema:
             type: string
+        - name: expiration
+          in: query
+          description: Expiration time of this job in seconds in the future
+          schema:
+            type: integer
+            default: 3600
       responses: 
         '200':
           description: Batch for processing
@@ -475,6 +481,7 @@ paths:
               - in_progress
               - cancelled
               - failed
+              - expired
         - name: progress
           in: query
           schema:

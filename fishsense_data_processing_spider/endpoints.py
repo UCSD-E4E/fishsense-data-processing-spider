@@ -2,6 +2,7 @@
 '''
 import datetime as dt
 import json
+import logging
 import uuid
 from abc import ABC
 from http import HTTPStatus
@@ -11,7 +12,8 @@ from tornado.web import HTTPError, RequestHandler
 
 from fishsense_data_processing_spider import __version__
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
-from fishsense_data_processing_spider.orchestrator import Orchestrator, JobStatus
+from fishsense_data_processing_spider.orchestrator import (JobStatus,
+                                                           Orchestrator)
 from fishsense_data_processing_spider.web_auth import KeyStore
 
 # pylint: disable=abstract-method
@@ -42,16 +44,17 @@ class BaseHandler(RequestHandler):
             await super()._execute(transforms, *args, **kwargs)
 
     def set_default_headers(self):
+        super().set_default_headers()
         self.set_header('Access-Control-Allow-Origin', '*')
-        self.set_header('Access-Control-Allow-Headers', 'x-requested-with')
+        self.set_header('Access-Control-Allow-Headers',
+                        'Content-Type, api_key, Authorization')
         self.set_header('Access-Control-Allow-Methods',
-                        'POST, GET, OPTIONS, PUT')
-
-        return super().set_default_headers()
+                        ', '.join(self.SUPPORTED_METHODS))
 
     def options(self, *_, **__):
         """Options handler
         """
+        logging.debug(self._headers)
         self.set_status(204)
         self.finish()
 
@@ -122,7 +125,7 @@ class AuthenticatedJobHandler(BaseHandler, ABC):
             raise HTTPError(HTTPStatus.UNAUTHORIZED, f'Key {api_key} failed')
 
 
-class RetrievePreprocessBatch(AuthenticatedJobHandler):
+class RetrieveBatch(AuthenticatedJobHandler):
     """Retrieves a batch of jobs
 
     """
@@ -135,9 +138,11 @@ class RetrievePreprocessBatch(AuthenticatedJobHandler):
 
         worker = self.get_query_argument('worker')
         n_images = int(self.get_query_argument('nImages', '1000'))
-        job_document = self._orchestrator.get_next_preprocessing_dict(
+        job_document = self._orchestrator.get_next_job_dict(
             worker=worker,
-            n_images=n_images
+            n_images=n_images,
+            origin=self.request.headers.get('api_key'),
+            expiration=int(self.get_query_argument('expiration', '3600'))
         )
         self.set_status(HTTPStatus.OK)
         self.write(job_document)
@@ -169,3 +174,19 @@ class JobStatusHandler(AuthenticatedJobHandler):
         )
         self.set_status(HTTPStatus.OK)
         self.finish()
+
+
+class NotImplementedHandler(BaseHandler):
+    SUPPORTED_METHODS = ('GET', 'PUT', 'POST', 'OPTIONS')
+
+    async def get(self, *_, **__) -> None:
+        raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
+                        f'{self.request.path} GET not implemented!')
+
+    async def put(self, *_, **__) -> None:
+        raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
+                        f'{self.request.path} PUT not implemented!')
+
+    async def post(self, *_, **__) -> None:
+        raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
+                        f'{self.request.path} POST not implemented!')

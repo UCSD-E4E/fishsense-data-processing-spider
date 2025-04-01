@@ -1,5 +1,6 @@
 '''Job Orchestrator
 '''
+import datetime as dt
 import enum
 import uuid
 from typing import Any, Dict, List, Optional
@@ -18,6 +19,7 @@ class JobStatus(enum.StrEnum):
     IN_PROGRESS = 'in_progress'
     CANCELLED = 'cancelled'
     FAILED = 'failed'
+    EXPIRED = 'expired'
 
 
 JOB_STATUS_MAPPING = {
@@ -25,6 +27,7 @@ JOB_STATUS_MAPPING = {
     JobStatus.IN_PROGRESS: 1,
     JobStatus.CANCELLED: 2,
     JobStatus.FAILED: 3,
+    JobStatus.EXPIRED: 4,
 }
 
 class Orchestrator:
@@ -35,16 +38,19 @@ class Orchestrator:
                  pg_conn: str):
         self.__pgconn = pg_conn
 
-    def get_next_preprocessing_dict(self,
-                                    worker: str,
-                                    n_images: int = 1000,
-                                    ) -> Dict[str, Any]:
+    def get_next_job_dict(self,
+                          worker: str,
+                          origin: str,
+                          n_images: int = 1000,
+                          expiration: int = 3600
+                          ) -> Dict[str, Any]:
         """Retrieves the next batch of preprocessing jobs
 
         Args:
             worker (str): Worker name
+            origin (str): Originating API Key
             n_images (int, optional): Max number of images to process. Defaults to 1000.
-
+            expiration (int, optional): Number of seconds in the future to expire.  Defaults to 3600.
         Returns:
             Dict[str, Any]: Dictionary of job parameters
         """
@@ -74,7 +80,9 @@ class Orchestrator:
                     params={
                         'job_id': job_id,
                         'worker': worker,
-                        'job_type': 'preprocess'
+                        'job_type': 'preprocess',
+                        'expiration': dt.datetime.now() + dt.timedelta(seconds=expiration),
+                        'origin': origin
                     }
                 )
                 do_many_query(

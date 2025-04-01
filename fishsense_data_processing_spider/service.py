@@ -19,8 +19,11 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.discovery import Crawler
-from fishsense_data_processing_spider.endpoints import (
-    HomePageHandler, JobStatusHandler, RetrievePreprocessBatch, VersionHandler)
+from fishsense_data_processing_spider.endpoints import (HomePageHandler,
+                                                        JobStatusHandler,
+                                                        NotImplementedHandler,
+                                                        RetrieveBatch,
+                                                        VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -86,17 +89,17 @@ class Service:
 
         self.__webapp = tornado.web.Application([
             URLSpec(
-                pattern=r'/()',
+                pattern=r'/$',
                 handler=HomePageHandler,
                 kwargs={'start_time': start_time}
             ),
             URLSpec(
-                pattern=r'/version()',
+                pattern=r'/version$',
                 handler=VersionHandler
             ),
             URLSpec(
-                pattern=r'/api/v1/jobs/preprocess/retrieve_batch$',
-                handler=RetrievePreprocessBatch,
+                pattern=r'/api/v1/jobs/retrieve_batch$',
+                handler=RetrieveBatch,
                 kwargs={
                     'key_store': self.__keystore,
                     'orchestrator': self.__job_orchestrator
@@ -109,7 +112,40 @@ class Service:
                     'key_store': self.__keystore,
                     'orchestrator': self.__job_orchestrator
                 }
-            )
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/raw/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/raw$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/preprocess_jpeg/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/laser_jpeg/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/laser/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/head_tail/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/depth_cal/(.+)$',
+                handler=NotImplementedHandler
+            ),
+            URLSpec(
+                pattern=r'/api/v1/data/lens_cal/(.+)$',
+                handler=NotImplementedHandler
+            ),
+
         ])
 
     def __validate_data_paths(self):
