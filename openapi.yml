@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.4
 info:
   title: Fishsense Data Processing Orchestrator
   description: |-
@@ -20,6 +20,12 @@ tags:
     description: Job management
   - name: data
     description: Data access
+  - name: data/images
+    description: Image access
+  - name: data/labels
+    description: Label access
+  - name: data/cal
+    description: Calibration data access
   - name: v1
     description: API v1
 paths:
@@ -28,14 +34,11 @@ paths:
       tags:
         - v1
         - data
+        - data/images
       summary: Retrieves the RAW binary blob represented by the data checksum
       operationId: getRawFile
       parameters:
-        - name: checksum
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/RawChecksum'
       responses:
         '200':
           description: Raw file content
@@ -43,6 +46,41 @@ paths:
             application/octet-stream:
               schema:
                 format: binary
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+  /api/v1/data/raw:
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - v1
+        - data
+        - data/images
+      summary: Submits a new RAW binary blob
+      operationId: putRawFile
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checksum:
+                    type: string
+                    example: 09d555e89c65f676094caa7efbf7ee7e
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
       security:
         - api_key: []
   /api/v1/data/preprocess_jpeg/{checksum}:
@@ -50,14 +88,11 @@ paths:
       tags:
         - v1
         - data
+        - data/images
       summary: Gets the preprocessed JPEG for the RAW file represented by the checksum
       operationId: getPreprocessedFrame
       parameters:
-        - name: checksum
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/RawChecksum'
       responses:
         '200':
           description: Preprocessed image
@@ -66,23 +101,20 @@ paths:
               schema:
                 format: binary
         '404':
-          description: |
-            Image not found.  This is either because the RAW file does not exist, or
-            because the JPEG has not been created
+          $ref: '#/components/responses/404NotFound'
         '401':
-          description: Unauthorized
+          $ref: '#/components/responses/401Unauthorized'
+        '429':
+          description: Too many requests
     put:
       tags:
         - v1
         - data
+        - data/images
       summary: Puts a preprocessed JPEG for the RAW file represented by the checksum
       operationId: putPreprocessedFrame
       parameters:
-        - name: checksum
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/RawChecksum'
       requestBody:
         content:
           image/jpeg:
@@ -94,19 +126,18 @@ paths:
       responses:
         '200':
           description: Operation success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
   /api/v1/data/laser_jpeg/{checksum}:
     get:
       tags:
         - data
         - v1
+        - data/images
       summary: Retrieves the laser JPEG for the RAW file represented by the checksum
       operationId: getLaserFrame
       parameters:
-        - name: checksum
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/RawChecksum'
       responses:
         '200':
           description: Preprocessed image with laser
@@ -115,11 +146,9 @@ paths:
               schema:
                 format: binary
         '404':
-          description: |
-            Image not found.  This is either because the RAW file does not exist, or because the
-            JPEG has not been created.
+          $ref: '#/components/responses/404NotFound'
         '401':
-          description: Unauthorized
+          $ref: '#/components/responses/401Unauthorized'
     put:
       deprecated: false
       x-42c-no-authentication: false
@@ -132,22 +161,255 @@ paths:
       tags:
         - data
         - v1
+        - data/images
       summary: Puts the laser JPEG for the RAW file file represented by the checksum
       operationId: putLaserFrame
       parameters:
-        - name: checksum
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/RawChecksum'
       responses:
         '200':
           description: JPEG accepted
         '404':
-          description: RAW file does not exist
+          $ref: '#/components/responses/404NotFound'
         '401':
-          description: Unauthorized
-        
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+      
+  /api/v1/data/laser/{checksum}:
+    get:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+        - data/labels
+      summary: Retrieves the laser label for the RAW file represented by the checksum
+      operationId: getLaserLabel
+      parameters:
+        - $ref: '#/components/parameters/RawChecksum'
+      responses:
+        '200':
+          description: Laser label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaserLabel'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+      
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+        - data/labels
+      summary: Records the laser label
+      operationId: putLaserLabel
+      parameters:
+        - $ref: '#/components/parameters/RawChecksum'
+      requestBody:
+        description: Laser Label to put
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LaserLabel'
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+  /api/v1/data/head_tail/{checksum}:
+    get:
+      tags:
+        - data
+        - v1
+        - data/labels
+      summary: Retrieves the head/tail label for the RAW file represented by the checksum
+      operationId: getHeadTailLabel
+      parameters:
+        - $ref: '#/components/parameters/RawChecksum'
+      responses:
+        '200':
+          description: Head/tail label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeadTailLabel'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+        - data/labels
+      summary: Records the head/tail label
+      operationId: putHeadTailLabel
+      parameters:
+        - $ref: '#/components/parameters/RawChecksum'
+      requestBody:
+        description: Head/tail label to put
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeadTailLabel'
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+  /api/v1/data/depth_cal/{checksum}:
+    get:
+      tags:
+        - data
+        - v1
+        - data/cal
+      summary: Retrieves the depth calibration parameters from the dive set
+      operationId: getDepthCal
+      parameters:
+        - $ref: '#/components/parameters/DiveChecksum'
+      responses:
+        '200':
+          description: Depth calibration parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepthCal'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+        - data/cal
+      summary: Records the depth calibration
+      operationId: putDepthCal
+      parameters:
+        - $ref: '#/components/parameters/DiveChecksum'
+      requestBody:
+        description: Depth calibration to put
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepthCal'
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+  /api/v1/data/lens_cal/{cameraId}:
+    get:
+      tags:
+        - data
+        - v1
+        - data/cal
+      summary: Retrieves the lens calibration parameters from the dive set
+      operationId: getLensCal
+      parameters:
+        - name: cameraId
+          description: Camera ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Lens calibration parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LensCal'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
+    put:
+      deprecated: false
+      x-42c-no-authentication: false
+      x-42c-mtls: false
+      x-42c-sensitivity: 3
+      x-42c-weight-input: 80
+      x-42c-weight-output: 20
+      x-42c-weight-parameters: 50
+      x-42c-weight-requestBody: 50
+      tags:
+        - data
+        - v1
+        - data/cal
+      summary: Records the lens calibration
+      operationId: putLensCal
+      parameters:
+        - name: cameraId
+          description: Camera ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        description: Lens calibration to put
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LensCal'
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
   /api/v1/jobs/preprocess/retrieve_batch:
     post:
       tags:
@@ -174,34 +436,7 @@ paths:
           content: 
             application/json: 
               schema: 
-                type: object
-                properties:
-                  jobs:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        jobId:
-                          type: string
-                          examples:
-                            - 517c4ae7-cd6d-4ea7-a180-a6f81c4ea52f
-                        frameIds:
-                          type: array
-                          examples:
-                            - [
-                                'f60dfbecc701d929f72047b2a410a3aa',
-                                '850314b1302d7277f5c363b243fe2c0c',
-                                '2f94aaed68d6c7515f1ba80523e2f130',
-                                'e5f52612820497165b9686d7b534c5e6',
-                                'b045035545018822435d0c02eb782a61',
-                                '5a0d1ae1d60117d94f2ddf3f4074bae8'
-                              ]
-                          items:
-                            type: string
-                        cameraId:
-                          type: integer
-                          examples:
-                            - 1
+                $ref: '#/components/schemas/JobDefinition'
         '400':
           description: Invalid input
       security:
@@ -240,50 +475,131 @@ paths:
       responses:
         '200':
           description: Success
-
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
 components:
+  responses:
+    404NotFound:
+      description: The specified resource was not found.
+    401Unauthorized:
+      description: Unauthorized
+  parameters:
+    RawChecksum:
+      name: checksum
+      description: Raw File checksum
+      in: path
+      required: true
+      schema:
+        type: string
+        example: d2e61611523f3d36f0eab788dc221a88
+    DiveChecksum:
+      name: checksum
+      description: Dive checksum
+      in: path
+      required: true
+      schema:
+        type: string
+        example: 6c6303018d587feeabd17dbd120efe13
   schemas:
-    JobIds:
+    DepthCal:
       type: object
       properties:
-        job_ids:
-          type: array
-          items:
-            type: string
-            description: Job IDs
+        type:
+          type: string
+          enum:
+            - single_laser
+            - double_laser
+        parameters:
+          type: object
+    LensCal:
+      type: object
+      properties:
+        type:
+          type: string
+        parameters:
+          type: object
+    HeadTailLabel:
+      example:
+        task_id: 146796
+        head_x: 2226
+        head_y: 1474
+        tail_x: 1986
+        tail_y: 1459
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Label Studio Task ID
+        head_x:
+          type: integer
+          description: X axis location of head in pixels
+        head_y:
+          type: integer
+          description: Y axis location of head in pixels
+        tail_x:
+          type: integer
+          description: X axis location of tail in pixels
+        tail_y:
+          type: integer
+          description: Y axis location of tail in pixels
+    LaserLabel:
+      example:
+        task_id: 33759
+        x: 1952
+        y: 1421
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Label Studio Task ID
+        x:
+          type: integer
+          description: X axis location of laser label in pixels
+        y:
+          type: integer
+          description: Y axis location of laser label in pixels
     JobDefinition:
       type: object
       properties:
-        job:
+        jobs:
           type: array
           items:
             type: object
             properties:
-              display_name:
+              jobId:
                 type: string
-              job_name:
+                example: 517c4ae7-cd6d-4ea7-a180-a6f81c4ea52f
+              operation:
                 type: string
                 enum:
                   - preprocess
                   - preprocess_with_laser
-              parameters:
-                type: object
-                properties:
-                  overwrite:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      type: string
-                  lens-calibration:
-                    type: string
-                  format:
-                    type: string
-                    enum:
-                      - JPG
-                      - PNG
-                  output:
-                    type: string
+                  - find_laser
+                  - find_head_tail
+                  - get_length
+              frameIds:
+                type: array
+                example: [
+                      'f60dfbecc701d929f72047b2a410a3aa',
+                      '850314b1302d7277f5c363b243fe2c0c',
+                      '2f94aaed68d6c7515f1ba80523e2f130',
+                      'e5f52612820497165b9686d7b534c5e6',
+                      'b045035545018822435d0c02eb782a61',
+                      '5a0d1ae1d60117d94f2ddf3f4074bae8'
+                    ]
+                items:
+                  type: string
+                description: List of frame checksums
+              cameraId:
+                type: integer
+                example: 1
+                description: Camera ID
+              diveId:
+                type: string
+                example: 6c6303018d587feeabd17dbd120efe13
+                description: Dive Checksum.  Will be null if multiple dives are present
 
 
   securitySchemes:
