@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.20.0 (2025-04-01)
+
+### Documentation
+
+- Fixes security
+  ([`c6627da`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c6627da3d3b90c003444737e53888af1187273e8))
+
+- Updates ICD
+  ([`495c414`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/495c4146d57b4d078b2edae95fe3de71b047182e))
+
+### Features
+
+- Adds other endpoints, adds job expiration
+  ([`5a0c0f4`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/5a0c0f4954a8735b4c590b33f52be2ea80c3e4e6))
+
+
 ## v0.19.0 (2025-03-30)
 
 ### Features
