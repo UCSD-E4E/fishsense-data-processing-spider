@@ -7,16 +7,18 @@ import uuid
 from abc import ABC
 from http import HTTPStatus
 from importlib.metadata import version
+from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
 
 from fishsense_data_processing_spider import __version__
+from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
 from fishsense_data_processing_spider.orchestrator import (JobStatus,
                                                            Orchestrator)
-from fishsense_data_processing_spider.web_auth import KeyStore
+from fishsense_data_processing_spider.web_auth import KeyStore, Permission
 
-# pylint: disable=abstract-method
+# pylint: disable=abstract-method, arguments-differ
 # This is typical behavior for tornado
 
 class BaseHandler(RequestHandler):
@@ -54,7 +56,6 @@ class BaseHandler(RequestHandler):
     def options(self, *_, **__):
         """Options handler
         """
-        logging.debug(self._headers)
         self.set_status(204)
         self.finish()
 
@@ -97,7 +98,34 @@ class VersionHandler(BaseHandler):
         }))
 
 
-class AuthenticatedJobHandler(BaseHandler, ABC):
+class AuthenticatedHandler(BaseHandler, ABC):
+    """Authenticated Handler
+
+    """
+
+    def initialize(self, key_store: KeyStore):
+        """Initializes the handler
+
+        Args:
+            key_store (KeyStore): API Key Store
+        """
+        # pylint: disable=attribute-defined-outside-init
+        # This is the correct pattern for tornado
+        self._key_store = key_store
+
+    def authenticate(self, perms: Optional[Permission] = None) -> bool:
+        """Checks whether this request is authorized or not.
+
+        If false, this method will also set up the status and content
+        """
+        api_key = self.request.headers.get('api_key')
+        if not api_key:
+            raise HTTPError(HTTPStatus.UNAUTHORIZED, 'Key not provided')
+        if not self._key_store.authorize_key(api_key, perms):
+            raise HTTPError(HTTPStatus.UNAUTHORIZED, f'Key {api_key} failed')
+
+
+class AuthenticatedJobHandler(AuthenticatedHandler, ABC):
     """Authenticated Job Handler
     """
 
@@ -106,23 +134,12 @@ class AuthenticatedJobHandler(BaseHandler, ABC):
 
         Args:
             key_store (KeyStore): API Key Store
-            orchestrator (Orchestrator): Job Orchestration
+            orchestrator (Orchestrator): Job orchestrator
         """
         # pylint: disable=attribute-defined-outside-init
         # This is the correct pattern for tornado
-        self._key_store = key_store
+        super().initialize(key_store=key_store)
         self._orchestrator = orchestrator
-
-    def authenticate(self) -> bool:
-        """Checks whether this request is authorized or not.
-
-        If false, this method will also set up the status and content
-        """
-        api_key = self.request.headers.get('api_key')
-        if not api_key:
-            raise HTTPError(HTTPStatus.UNAUTHORIZED, 'Key not provided')
-        if not self._key_store.authorize_key(api_key):
-            raise HTTPError(HTTPStatus.UNAUTHORIZED, f'Key {api_key} failed')
 
 
 class RetrieveBatch(AuthenticatedJobHandler):
@@ -207,3 +224,28 @@ class NotImplementedHandler(BaseHandler):
         """
         raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
                         f'{self.request.path} POST not implemented!')
+
+
+class DoDiscoveryHandler(AuthenticatedHandler):
+    """Do Discovery handler
+    """
+    SUPPORTED_METHODS = ('POST', 'OPTIONS')
+
+    def initialize(self, key_store: KeyStore, crawler: Crawler):
+        """Initializes this handler
+
+        Args:
+            key_store (KeyStore): Web Key Store
+            crawler (Crawler): Crawler
+
+        """
+        # pylint: disable=attribute-defined-outside-init
+        # This is the correct pattern for tornado
+        self._crawler = crawler
+        super().initialize(key_store)
+
+    async def post(self, *_, **__) -> None:
+        """POST method
+        """
+        self.authenticate(Permission.DO_DISCOVERY)
+        self._crawler.sleep_interrupt.set()

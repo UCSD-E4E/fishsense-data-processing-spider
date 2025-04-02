@@ -182,6 +182,7 @@ class KeyStore:
         if expires < dt.datetime.now():
             self.__log.info('Key failed - expired')
             return False
-        if perm and bool(result[1]):
+        if perm and not bool(result[1]):
+            self.__log.info('Key failed - not authorized for %s', perm)
             return False
         return True

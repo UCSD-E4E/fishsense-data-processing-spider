@@ -19,7 +19,8 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.discovery import Crawler
-from fishsense_data_processing_spider.endpoints import (HomePageHandler,
+from fishsense_data_processing_spider.endpoints import (DoDiscoveryHandler,
+                                                        HomePageHandler,
                                                         JobStatusHandler,
                                                         NotImplementedHandler,
                                                         RetrieveBatch,
@@ -145,7 +146,14 @@ class Service:
                 pattern=r'/api/v1/data/lens_cal/(.+)$',
                 handler=NotImplementedHandler
             ),
-
+            URLSpec(
+                pattern=r'/api/v1/control/discover$',
+                handler=DoDiscoveryHandler,
+                kwargs={
+                    'crawler': self.__crawler,
+                    'key_store': self.__keystore
+                }
+            )
         ])
 
     def __validate_data_paths(self):

@@ -28,6 +28,8 @@ tags:
     description: Calibration data access
   - name: v1
     description: API v1
+  - name: control
+    description: Spider control
 paths:
   /api/v1/data/raw/{checksum}:
     get:
@@ -496,6 +498,24 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '401':
           $ref: '#/components/responses/401Unauthorized'
+  /api/v1/control/discover:
+    post:
+      tags:
+        - v1
+        - control
+      summary: Triggers a discovery cycle
+      description: |
+        Triggers a discovery cycle, where the spider will search the filesystem and
+        update the database
+      operationId: doDiscovery
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      
 components:
   responses:
     404NotFound:

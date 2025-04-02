@@ -53,6 +53,7 @@ class Crawler:
         self.__multi_camera_dives = multi_camera_dives_path
         self.__dive_insert_path = dive_insert_path
         self.stop_event = Event()
+        self.sleep_interrupt = Event()
         self.__interval = interval
         self.__process_thread: Optional[Thread] = None
 
@@ -88,9 +89,10 @@ class Crawler:
             except Exception as exc:  # pylint: disable=broad-except
                 self.__log.exception('Image discovery failed due to %s', exc)
 
+            self.sleep_interrupt.clear()
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:
-                time.sleep(time_to_sleep)
+                self.sleep_interrupt.wait(time_to_sleep)
 
     def __conslidate_dives(self):
         with psycopg.connect(self.__conn, row_factory=dict_row) as con, con.cursor() as cur:
