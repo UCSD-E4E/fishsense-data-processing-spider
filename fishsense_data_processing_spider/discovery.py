@@ -3,7 +3,6 @@
 import datetime as dt
 import itertools
 import logging
-import time
 from pathlib import Path
 from threading import Event, Thread
 from typing import Dict, List, Optional, Union
@@ -17,7 +16,8 @@ from fishsense_data_processing_spider.backend import (
     get_image_date)
 from fishsense_data_processing_spider.config import get_log_path
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
-                                                      get_counter, get_summary)
+                                                      get_counter, get_gauge,
+                                                      get_summary)
 from fishsense_data_processing_spider.sql_utils import (do_many_query,
                                                         do_query, load_query)
 
@@ -58,6 +58,13 @@ class Crawler:
         self.__process_thread: Optional[Thread] = None
 
         self.__log.debug('Using interval %d s', self.__interval.total_seconds())
+
+        get_gauge(
+            'new_cdives_to_add',
+            'New Canonical Dives to add',
+            namespace='e4efs',
+            subsystem='spider'
+        )
 
     def __image_discovery_loop(self):
         while not self.stop_event.is_set():
@@ -125,6 +132,7 @@ class Crawler:
             )
             checksums = [row['checksum'] for row in cur.fetchall()]
             self.__dive_insert_path.unlink(missing_ok=True)
+            new_dive_count = 0
             for checksum in checksums:
                 do_query(
                     path='sql/select_candidate_dive_by_checksum.sql',
@@ -155,6 +163,9 @@ class Crawler:
                 query = load_query('sql/insert_canonical_dive.sql')
                 with open(self.__dive_insert_path, 'a', encoding='utf-8') as handle:
                     handle.write(f'{query % result}\n')
+                new_dive_count += 1
+            new_dive_gauge = get_gauge('new_cdives_to_add')
+            new_dive_gauge.set(new_dive_count)
 
 
     def __extract_image_dates(self):
