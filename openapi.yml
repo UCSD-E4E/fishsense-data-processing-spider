@@ -422,7 +422,7 @@ paths:
       security:
         - api_key: []
 
-  /api/v1/jobs/preprocess/retrieve_batch:
+  /api/v1/jobs/retrieve_batch:
     post:
       tags:
         - job
