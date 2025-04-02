@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.21.0 (2025-04-02)
+
+### Bug Fixes
+
+- Error handling for insert canonical dives
+  ([`b936a42`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b936a4239058b94996eb4c5a17f3b5e88a8ed3d9))
+
+### Features
+
+- Adds field_cal_ignore column
+  ([`2bda471`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2bda4714210ddf6615720753ee0475996a67236d))
+
+
 ## v0.20.0 (2025-04-01)
 
 ### Documentation
