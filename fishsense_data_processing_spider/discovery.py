@@ -18,7 +18,8 @@ from fishsense_data_processing_spider.backend import (
 from fishsense_data_processing_spider.config import get_log_path
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_counter, get_summary)
-from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
+from fishsense_data_processing_spider.sql_utils import (do_many_query,
+                                                        do_query, load_query)
 
 
 class Crawler:
@@ -31,7 +32,8 @@ class Crawler:
                  interval: dt.timedelta,
                  *,
                  failed_images_path: Path = get_log_path() / 'failed_images.log',
-                 multi_camera_dives_path: Path = get_log_path() / 'multiple_camera_dives.log'
+                 multi_camera_dives_path: Path = get_log_path() / 'multiple_camera_dives.log',
+                 dive_insert_path: Path = get_log_path() / 'insert_canonical_dive.sql'
                  ): # pylint: disable=too-many-arguments,
         """Creates the new crawler
 
@@ -49,6 +51,7 @@ class Crawler:
         self.__conn = conn_str
         self.__failed_images_path = failed_images_path
         self.__multi_camera_dives = multi_camera_dives_path
+        self.__dive_insert_path = dive_insert_path
         self.stop_event = Event()
         self.__interval = interval
         self.__process_thread: Optional[Thread] = None
@@ -59,28 +62,31 @@ class Crawler:
         while not self.stop_event.is_set():
             last_run = dt.datetime.now()
             next_run = last_run + self.__interval
+            try:
 
-            for data_dir in self.__data_paths:
-                data_dir = Path(data_dir)
-                self.__discover_dives(data_dir)
+                for data_dir in self.__data_paths:
+                    data_dir = Path(data_dir)
+                    self.__discover_dives(data_dir)
+                    if self.stop_event.is_set():
+                        return
+
+                self.__conslidate_dives()
                 if self.stop_event.is_set():
                     return
 
-            self.__conslidate_dives()
-            if self.stop_event.is_set():
-                return
+                self.__compute_camera_sns()
+                if self.stop_event.is_set():
+                    return
 
-            self.__compute_camera_sns()
-            if self.stop_event.is_set():
-                return
+                self.__image_dates()
+                if self.stop_event.is_set():
+                    return
 
-            self.__image_dates()
-            if self.stop_event.is_set():
-                return
-
-            self.__process_canonical_dives()
-            if self.stop_event.is_set():
-                return
+                self.__process_canonical_dives()
+                if self.stop_event.is_set():
+                    return
+            except Exception as exc:  # pylint: disable=broad-except
+                self.__log.exception('Image discovery failed due to %s', exc)
 
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:
@@ -116,6 +122,7 @@ class Crawler:
                 cur=cur
             )
             checksums = [row['checksum'] for row in cur.fetchall()]
+            self.__dive_insert_path.unlink(missing_ok=True)
             for checksum in checksums:
                 do_query(
                     path='sql/select_candidate_dive_by_checksum.sql',
@@ -127,11 +134,15 @@ class Crawler:
                 result = cur.fetchone()
                 if result is None:
                     continue
-                do_query(
-                    path='sql/insert_canonical_dive.sql',
-                    cur=cur,
-                    params=result
-                )
+                # do_query(
+                #     path='sql/insert_canonical_dive.sql',
+                #     cur=cur,
+                #     params=result
+                # )
+                query = load_query('sql/insert_canonical_dive.sql')
+                with open(self.__dive_insert_path, 'a', encoding='utf-8') as handle:
+                    handle.write(f'{query % result}\n')
+
 
     def __extract_image_dates(self):
         failed_images: Dict[str, Exception] = {}

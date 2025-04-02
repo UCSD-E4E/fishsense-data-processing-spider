@@ -2,11 +2,12 @@
 '''
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
+import logging
 import psycopg
 
 from fishsense_data_processing_spider.metrics import get_summary
 
+__log = logging.getLogger('sql_utils')
 
 def load_query(path: Path) -> str:
     """Loads query from path
@@ -34,10 +35,17 @@ def do_query(path: Union[Path, str], cur: psycopg.Cursor, params: Optional[Dict[
         'query_duration'
     )
     with query_timer.labels(query=path.stem).time():
-        cur.execute(
-            query=load_query(path),
-            params=params
-        )
+        try:
+            cur.execute(
+                query=load_query(path),
+                params=params
+            )
+        except psycopg.errors.Error as exc:
+            __log.exception('Query %s with params %s failed due to %s',
+                            path,
+                            params,
+                            exc)
+            raise exc
 
 
 def do_many_query(path: Union[Path, str],
@@ -58,8 +66,17 @@ def do_many_query(path: Union[Path, str],
         'query_duration'
     )
     with query_timer.labels(query=path.stem).time():
-        cur.executemany(
-            query=load_query(path),
-            params_seq=param_seq,
-            returning=returning
-        )
+        try:
+            cur.executemany(
+                query=load_query(path),
+                params_seq=param_seq,
+                returning=returning
+            )
+        except psycopg.errors.Error as exc:
+            __log.exception(
+                'Query %s with param seq %s failed due to %s',
+                path,
+                param_seq,
+                exc
+            )
+            raise exc

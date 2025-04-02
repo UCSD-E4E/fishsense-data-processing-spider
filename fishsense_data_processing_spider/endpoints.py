@@ -177,16 +177,33 @@ class JobStatusHandler(AuthenticatedJobHandler):
 
 
 class NotImplementedHandler(BaseHandler):
+    """Endpoint Not Implemented Handler
+    """
     SUPPORTED_METHODS = ('GET', 'PUT', 'POST', 'OPTIONS')
 
     async def get(self, *_, **__) -> None:
+        """Get Method Handler
+
+        Raises:
+            HTTPError: Not Implemented
+        """
         raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
                         f'{self.request.path} GET not implemented!')
 
     async def put(self, *_, **__) -> None:
+        """Put Method Handler
+
+        Raises:
+            HTTPError: Not Implemented
+        """
         raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
                         f'{self.request.path} PUT not implemented!')
 
     async def post(self, *_, **__) -> None:
+        """Post Method Handler
+
+        Raises:
+            HTTPError: Not Implemented
+        """
         raise HTTPError(HTTPStatus.NOT_IMPLEMENTED,
                         f'{self.request.path} POST not implemented!')

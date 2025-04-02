@@ -50,7 +50,8 @@ class Orchestrator:
             worker (str): Worker name
             origin (str): Originating API Key
             n_images (int, optional): Max number of images to process. Defaults to 1000.
-            expiration (int, optional): Number of seconds in the future to expire.  Defaults to 3600.
+            expiration (int, optional): Number of seconds in the future to expire.  Defaults to 
+            3600.
         Returns:
             Dict[str, Any]: Dictionary of job parameters
         """
