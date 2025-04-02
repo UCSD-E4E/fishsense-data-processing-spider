@@ -5,7 +5,7 @@ from typing import Optional
 
 import rpyc
 
-from fishsense_data_processing_spider.web_auth import KeyStore
+from fishsense_data_processing_spider.web_auth import KeyStore, Permission
 
 
 class CliService(rpyc.Service):
@@ -31,4 +31,18 @@ class CliService(rpyc.Service):
         return self.__key_store.get_new_key(
             comment=comment,
             expires=expiration
+        )
+
+    def exposed_set_api_key_permissions(self, api_key: str, permission: str, value: bool) -> None:
+        """Exposed - sets the api key permissions
+
+        Args:
+            api_key (str): API Key
+            permission (str): Permission name to set
+            value (bool): Value to set
+        """
+        self.__key_store.set_perm(
+            key=api_key,
+            op=Permission[permission],
+            value=value
         )

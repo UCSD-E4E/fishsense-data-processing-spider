@@ -2,18 +2,24 @@
 '''
 import contextlib
 import datetime as dt
+import enum
 import hashlib
 import logging
 import secrets
 import sqlite3
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
+
+class Permission(enum.Enum):
+    """Operation ID permissions
+    """
+    DO_DISCOVERY = 'doDiscovery'
 
 class KeyStore:
     """API Key Store
     """
-    VERSION = 1
+    VERSION = 2
     ITERATIONS = 200000
 
     def __init__(self,
@@ -59,6 +65,13 @@ class KeyStore:
                         'version': 1
                     }
                 )
+            if version < 2:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN doDiscovery INTEGER DEFAULT FALSE;'
+                )
+                cur.execute(
+                    'UPDATE version SET version=2;'
+                )
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'
@@ -92,17 +105,57 @@ class KeyStore:
             con.commit()
         return new_key
 
-    def __hash_key(self, new_key: str) -> str:
+    def list_hashes(self) -> Dict[str, str]:
+        """List hashes
+
+        Returns:
+            Dict[str, str]: Mapping of hash to comment
+        """
+        with contextlib.closing(sqlite3.connect(self.__path)) as con, \
+                contextlib.closing(con.cursor()) as cur:
+            cur.execute(
+                'SELECT hash, comment FROM keys WHERE expires > :now;',
+                {
+                    'now': int(dt.datetime.now().timestamp())
+                }
+            )
+            return {
+                row[0]: row[1]
+                for row in cur.fetchall()
+            }
+
+    def set_perm(self, key: str, op: Permission, value: bool) -> None:
+        """Sets the permissions for the given key
+
+        Args:
+            key (str): Key to set perms for
+            op (Permission): Operation ID to set
+            value (bool): Allow
+        """
+        key_hash = self.__hash_key(key)
+        with contextlib.closing(sqlite3.connect(self.__path)) as con, \
+                contextlib.closing(con.cursor()) as cur:
+            cur.execute(
+                f'UPDATE keys SET {op.value} = :value WHERE hash = :hash;',
+                {
+                    'hash': key_hash,
+                    'value': value
+                }
+            )
+            con.commit()
+
+    def __hash_key(self, key: str) -> str:
         return hashlib.pbkdf2_hmac('sha256',
-                                   new_key.encode(),
+                                   key.encode(),
                                    self.__salt.encode(),
                                    self.__iterations)
 
-    def authorize_key(self, key: str) -> bool:
+    def authorize_key(self, key: str, perm: Optional[Permission] = None) -> bool:
         """Checks if the key is authorized
 
         Args:
             key (str): Key to check
+            perm (Permission): ACL to check
 
         Returns:
             bool: True if authorized, otherwise False
@@ -111,8 +164,12 @@ class KeyStore:
         self.__log.debug('Computed hash %s', hash_to_verify)
         with contextlib.closing(sqlite3.connect(self.__path)) as con, \
                 contextlib.closing(con.cursor()) as cur:
+            if perm:
+                query = f'SELECT expires, {perm.value} FROM keys WHERE hash = :hash LIMIT 1;'
+            else:
+                query = 'SELECT expires FROM keys WHERE hash = :hash LIMIT 1;'
             cur.execute(
-                'SELECT expires FROM keys WHERE hash = :hash LIMIT 1;',
+                query,
                 {
                     'hash': hash_to_verify
                 }
@@ -124,5 +181,7 @@ class KeyStore:
         expires = dt.datetime.fromtimestamp(result[0])
         if expires < dt.datetime.now():
             self.__log.info('Key failed - expired')
+            return False
+        if perm and bool(result[1]):
             return False
         return True
