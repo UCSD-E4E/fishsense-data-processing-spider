@@ -144,17 +144,6 @@ class Crawler:
                 result = cur.fetchone()
                 if result is None:
                     continue
-                do_query(
-                    path='sql/update_canonical_dives_checksum.sql',
-                    cur=cur,
-                    params={
-                        'checksum': checksum
-                    }
-                )
-                result = cur.fetchall()
-                if len(result) == 1:
-                    # We just updated the checksums
-                    continue
                 # do_query(
                 #     path='sql/insert_canonical_dive.sql',
                 #     cur=cur,
