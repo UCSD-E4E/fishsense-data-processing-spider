@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.22.0 (2025-04-02)
+
+### Features
+
+- Adds ACLs
+  ([`19678c1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/19678c194d3ab68ec0056ad3087a5760085cedd5))
+
+- Adds endpoint to kick off discovery
+  ([`97bcbd5`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/97bcbd5ec2e1b2bd834a29ef9d63aa600b330c95))
+
+
 ## v0.21.0 (2025-04-02)
 
 ### Bug Fixes
