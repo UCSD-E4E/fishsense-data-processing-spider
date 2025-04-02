@@ -108,7 +108,7 @@ class Crawler:
             dives = [row['path'] for row in cur.fetchall()]
             for dive_path in dives:
                 do_query(
-                    path='sql/select_images_in_dive.sql',
+                    path='sql/select_dive_checksum_images_in_dive.sql',
                     cur=cur,
                     params={
                         'dive': dive_path
