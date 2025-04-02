@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v0.23.0 (2025-04-02)
+
+### Bug Fixes
+
+- Adds metrics for new dives
+  ([`058d63f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/058d63f81daca0b6695c06c0eab9f709925f09b0))
+
+- Disallows canonical dive checksum update
+  ([`b143c92`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b143c9227bd57438e612da25edc03cae35d77726))
+
+- Fixes dive checksums
+  ([`6bf8145`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6bf814539e295138c9a2ab3e3a987b081261018c))
+
+### Documentation
+
+- Fixes retrieve_batch path
+  ([`180ebbc`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/180ebbcf92f5d235353b629a87c5c4026cea7baa))
+
+### Features
+
+- Adds job reaper
+  ([`ecc8f8e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ecc8f8efd1616e97c58135ffec0ef04181e5886d))
+
+
 ## v0.22.1 (2025-04-02)
 
 ### Bug Fixes
