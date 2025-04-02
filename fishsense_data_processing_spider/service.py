@@ -86,7 +86,10 @@ class Service:
         )
         add_thread_to_monitor(self.rpyc_thread)
 
-        self.__job_orchestrator = Orchestrator(PG_CONN_STR)
+        self.__job_orchestrator = Orchestrator(
+            pg_conn=PG_CONN_STR,
+            reaper_interval=settings.orchestrator.reaper_interval
+        )
 
         self.__webapp = tornado.web.Application([
             URLSpec(
@@ -219,9 +222,11 @@ class Service:
 
         self.__label_studio.run()
         self.__crawler.run()
+        self.__job_orchestrator.start()
 
         await self.stop_event.wait()
 
+        self.__job_orchestrator.stop()
         self.__crawler.stop()
         self.__label_studio.stop()
 

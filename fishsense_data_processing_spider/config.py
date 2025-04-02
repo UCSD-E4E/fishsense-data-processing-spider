@@ -138,6 +138,11 @@ validators = [
     Validator(
         'web_api.key_store',
         cast=Path
+    ),
+    Validator(
+        'orchestrator.reaper_interval',
+        cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
+        default='5m'
     )
 ]
 

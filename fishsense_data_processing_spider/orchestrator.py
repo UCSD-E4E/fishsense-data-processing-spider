@@ -3,11 +3,14 @@
 import datetime as dt
 import enum
 import uuid
+from threading import Event, Thread
 from typing import Any, Dict, List, Optional
-
+import logging
 import psycopg
 from psycopg.rows import dict_row
 
+from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
+                                                      get_counter)
 from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
 
 
@@ -35,8 +38,77 @@ class Orchestrator:
     """
 
     def __init__(self,
-                 pg_conn: str):
+                 pg_conn: str,
+                 *,
+                 reaper_interval: dt.timedelta = dt.timedelta(minutes=5)):
+        self.__log = logging.getLogger('Job Orchestrator')
         self.__pgconn = pg_conn
+        self.__reaper_thread = Thread(
+            target=self.__reaper_loop,
+            name='Job Reaper',
+            kwargs={
+                'interval': reaper_interval
+            }
+        )
+        add_thread_to_monitor(self.__reaper_thread)
+        self.stop_event = Event()
+        get_counter(
+            'reaped_jobs',
+            'Number of reaped jobs',
+            labelnames=['job'],
+            namespace='e4efs',
+            subsystem='spider'
+        )
+
+    def start(self):
+        """Starts the orchestrator threads
+        """
+        self.__reaper_thread.start()
+
+    def stop(self):
+        """Stops the orchestrator threads
+        """
+        self.stop_event.set()
+        self.__reaper_thread.join()
+
+    def __reaper_loop(self, interval: dt.timedelta):
+        reaped_job_counter = get_counter('reaped_jobs')
+        while not self.stop_event.is_set():
+            last_run = dt.datetime.now()
+            next_run = last_run + interval
+            with psycopg.connect(self.__pgconn, row_factory=dict_row) as con, con.cursor() as cur:
+                reaped_ids = []
+                try:
+                    do_query(
+                        path='sql/update_expired_preprocess_job_images.sql',
+                        cur=cur
+                    )
+                    reaped_preprocess_jobs = cur.fetchall()
+                    for reaped_job in reaped_preprocess_jobs:
+                        self.__log.info('Reaped preprocess job for %s, id %s',
+                                        reaped_job['image_md5'],
+                                        reaped_job['job_id'])
+                        reaped_ids.append(reaped_job['job_id'])
+                        reaped_job_counter.inc()
+                except psycopg.errors.Error as exc:
+                    self.__log.exception(
+                        'Reaping preprocess jobs failed! %s', exc)
+
+                try:
+                    do_many_query(
+                        path='sql/update_expired_jobs.sql',
+                        cur=cur,
+                        param_seq=[
+                            {
+                                'job_id': job_id
+                            }
+                            for job_id in reaped_ids
+                        ]
+                    )
+                except psycopg.errors.Error as exc:
+                    self.__log.exception('Updating jobs table failed! %s', exc)
+            time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
+            self.stop_event.wait(time_to_sleep)
 
     def get_next_job_dict(self,
                           worker: str,
