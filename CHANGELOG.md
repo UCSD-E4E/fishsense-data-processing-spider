@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.1 (2025-04-02)
+
+### Bug Fixes
+
+- Allows for updating dive checksums
+  ([`04425ff`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/04425ff7a2b210a2b904d906a11aa8bdab27f8a9))
+
+
 ## v0.22.0 (2025-04-02)
 
 ### Features
