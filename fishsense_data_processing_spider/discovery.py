@@ -108,14 +108,13 @@ class Crawler:
             dives = [row['path'] for row in cur.fetchall()]
             for dive_path in dives:
                 do_query(
-                    path='sql/select_dive_checksum_images_in_dive.sql',
+                    path='sql/select_compute_dive_checksum_by_dive.sql',
                     cur=cur,
                     params={
                         'dive': dive_path
                     }
                 )
-                result = cur.fetchall()
-                cksum = get_dive_checksum_from_query(result)
+                cksum = cur.fetchall()['md5']
                 do_query(
                     path='sql/update_dive_cksum.sql',
                     cur=cur,
