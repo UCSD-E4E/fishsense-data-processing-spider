@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.23.1 (2025-04-04)
+
+### Bug Fixes
+
+- Consolidates checksum computation
+  ([`144d7f3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/144d7f343eff9943226dd062afd7027e878861cd))
+
+
 ## v0.23.0 (2025-04-02)
 
 ### Bug Fixes
