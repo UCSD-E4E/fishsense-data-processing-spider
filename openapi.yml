@@ -515,6 +515,24 @@ paths:
           description: Success
         '401':
           $ref: '#/components/responses/401Unauthorized'
+
+  /api/v1/control/label_studio_sync:
+    post:
+      tags:
+        - v1
+        - control
+      summary: Triggers a label studio sync
+      description: |
+        Triggers a label studio sync, where the spider will sync exports from Label Studio and
+        update the database
+      operationId: doLabelStudioSync
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
       
 components:
   responses:

@@ -17,6 +17,7 @@ from fishsense_data_processing_spider.metrics import get_counter, get_summary
 from fishsense_data_processing_spider.orchestrator import (JobStatus,
                                                            Orchestrator)
 from fishsense_data_processing_spider.web_auth import KeyStore, Permission
+from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 
 # pylint: disable=abstract-method, arguments-differ
 # This is typical behavior for tornado
@@ -249,3 +250,26 @@ class DoDiscoveryHandler(AuthenticatedHandler):
         """
         self.authenticate(Permission.DO_DISCOVERY)
         self._crawler.sleep_interrupt.set()
+
+
+class DoLabelStudioSyncHandler(AuthenticatedHandler):
+    SUPPORTED_METHODS = ('POST', 'OPTIONS')
+
+    def initialize(self, key_store: KeyStore, label_studio: LabelStudioSync):
+        """Initializes this handler
+
+        Args:
+            key_store (KeyStore): Web Key Store
+            label_studio (LabelStudioSync): Label Studio Syncer
+
+        """
+        # pylint: disable=attribute-defined-outside-init
+        # This is the correct pattern for tornado
+        self._label_studio = label_studio
+        super().initialize(key_store)
+
+    async def post(self, *_, **__) -> None:
+        """POST method
+        """
+        self.authenticate(Permission.DO_LABEL_STUDIO_SYNC)
+        self._label_studio.sleep_interrupt.set()

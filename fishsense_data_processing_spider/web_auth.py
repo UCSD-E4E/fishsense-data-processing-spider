@@ -15,11 +15,12 @@ class Permission(enum.Enum):
     """Operation ID permissions
     """
     DO_DISCOVERY = 'doDiscovery'
+    DO_LABEL_STUDIO_SYNC = 'doLabelStudioSync'
 
 class KeyStore:
     """API Key Store
     """
-    VERSION = 2
+    VERSION = 3
     ITERATIONS = 200000
 
     def __init__(self,
@@ -71,6 +72,13 @@ class KeyStore:
                 )
                 cur.execute(
                     'UPDATE version SET version=2;'
+                )
+            if version < 3:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN doLabelStudioSync INTEGER DEFAULT FALSE;'
+                )
+                cur.execute(
+                    'UPDATE version SET version=3;'
                 )
             con.commit()
             cur.execute(

@@ -19,12 +19,9 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
 from fishsense_data_processing_spider.discovery import Crawler
-from fishsense_data_processing_spider.endpoints import (DoDiscoveryHandler,
-                                                        HomePageHandler,
-                                                        JobStatusHandler,
-                                                        NotImplementedHandler,
-                                                        RetrieveBatch,
-                                                        VersionHandler)
+from fishsense_data_processing_spider.endpoints import (
+    DoDiscoveryHandler, DoLabelStudioSyncHandler, HomePageHandler,
+    JobStatusHandler, NotImplementedHandler, RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -91,7 +88,7 @@ class Service:
             reaper_interval=settings.orchestrator.reaper_interval
         )
 
-        self.__webapp = tornado.web.Application([
+        web_routes = [
             URLSpec(
                 pattern=r'/$',
                 handler=HomePageHandler,
@@ -156,8 +153,18 @@ class Service:
                     'crawler': self.__crawler,
                     'key_store': self.__keystore
                 }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/control/label_studio_sync$',
+                handler=DoLabelStudioSyncHandler,
+                kwargs={
+                    'crawler': self.__crawler,
+                    'label_studio': self.__label_studio
+                }
             )
-        ])
+        ]
+
+        self.__webapp = tornado.web.Application(web_routes)
 
     def __validate_data_paths(self):
         # This isn't working!  not sure why

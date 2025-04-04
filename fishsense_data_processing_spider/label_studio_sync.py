@@ -2,7 +2,6 @@
 '''
 import datetime as dt
 import logging
-import time
 import urllib.parse
 from pathlib import Path
 from threading import Event, Thread
@@ -11,7 +10,8 @@ import psycopg
 from psycopg.rows import dict_row
 
 from fishsense_data_processing_spider.backend import get_project_export
-from fishsense_data_processing_spider.config import PG_CONN_STR, settings
+from fishsense_data_processing_spider.config import (PG_CONN_STR, get_log_path,
+                                                     settings)
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge)
 from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
@@ -20,11 +20,16 @@ from fishsense_data_processing_spider.sql_utils import do_many_query, do_query
 class LabelStudioSync:
     """Label Studio Sync thread
     """
-    def __init__(self):
+
+    def __init__(self,
+                 *,
+                 bad_task_links_path: Path = get_log_path() / 'bad_task_links.txt'):
         self.__log = logging.getLogger('LabelStudioSync')
         self.stop_event = Event()
+        self.__bad_task_links_path = bad_task_links_path
         self.__run_thread = Thread(target=self.__sync_body, name='label_studio_sync')
         add_thread_to_monitor(self.__run_thread)
+        self.sleep_interrupt = Event()
 
     @staticmethod
     def __extract_old_laser_path(url: str) -> Path:
@@ -56,17 +61,24 @@ class LabelStudioSync:
             for task_id, result in results.items()
             if len(result) == 2
         }
-        params_seq = [
-            {
-                'cksum': cksums[task_id],
-                'head_x': coords['Snout_x'],
-                'head_y': coords['Snout_y'],
-                'tail_x': coords['Fork_x'],
-                'tail_y': coords['Fork_y']
-            }
-            for task_id, coords in flat_results.items()
-            if 'Snout_x' in coords
-        ]
+        params_seq = []
+        for task_id, coords in flat_results.items():
+            try:
+                params_seq.append({
+                    'cksum': cksums[task_id],
+                    'head_x': coords['Snout_x'],
+                    'head_y': coords['Snout_y'],
+                    'tail_x': coords['Fork_x'],
+                    'tail_y': coords['Fork_y']
+                })
+            except KeyError:
+                required_keys = set(['Snout_x', 'Snout_y', 'Fork_x', 'Fork_y'])
+                if len(required_keys.intersection(set(coords.keys()))) > 0:
+                    # Some keys are present but not all
+                    with open(self.__bad_task_links_path, 'a', encoding='utf-8') as handle:
+                        handle.write(f'https://{settings.label_studio.host}/projects/19/data?'
+                                     f'task={task_id}\n')
+
 
         with psycopg.connect(PG_CONN_STR, row_factory=dict_row) as con, con.cursor() as cur:
             do_many_query(
@@ -174,6 +186,7 @@ class LabelStudioSync:
             next_run = last_run + settings.label_studio.interval
 
             self.__log.info('Syncing projects')
+            self.__bad_task_links_path.unlink(missing_ok=True)
             try:
                 self.__sync_project_10()
             except Exception as exc: # pylint: disable=broad-except
@@ -191,9 +204,11 @@ class LabelStudioSync:
             except Exception as exc: # pylint: disable=broad-except
                 self.__log.exception('Syncing project 19 failed! %s', exc)
             self.__log.info('Projects synced')
+
+            self.sleep_interrupt.clear()
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             if time_to_sleep > 0:
-                time.sleep(time_to_sleep)
+                self.sleep_interrupt.wait(time_to_sleep)
 
     def run(self):
         """Starts the sync threads
