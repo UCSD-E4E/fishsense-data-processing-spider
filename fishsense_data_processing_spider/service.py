@@ -184,7 +184,7 @@ class Service:
         counts = get_gauge(
             'count',
             documentation='Counts',
-            labelnames=['table'],
+            labelnames=['metric'],
             namespace='e4efs',
             subsystem='spider'
         )
@@ -198,18 +198,31 @@ class Service:
         while True:
             last_run = dt.datetime.now()
             next_run = last_run + settings.summary.interval
+            tables = [
+                'images',
+                'dives',
+                'canonical_dives',
+                'laser_labels',
+                'headtail_labels',
+                'jobs'
+            ]
             with psycopg.connect(PG_CONN_STR, row_factory=psycopg.rows.dict_row) as con, \
                     con.cursor() as cur:
                 try:
-                    with query_timer.labels(query='count_images').time():
-                        cur.execute('SELECT COUNT(*) FROM images;')
-                    counts.labels(table='images').set(cur.fetchone()['count'])
-                    with query_timer.labels(query='count_dives').time():
-                        cur.execute('SELECT COUNT(*) FROM dives;')
-                    counts.labels(table='dives').set(cur.fetchone()['count'])
-                    with query_timer.labels(query='count_cdives').time():
-                        cur.execute('SELECT COUNT(*) FROM canonical_dives;')
-                    counts.labels(table='canonical_dives').set(
+                    for table in tables:
+                        with query_timer.labels(query=f'count_{table}').time():
+                            cur.execute(f'SELECT COUNT(*) FROM {table};')
+                        counts.labels(metric=table).set(
+                            cur.fetchone()['count'])
+                    with query_timer.labels(query='count_complete_laser_labels').time():
+                        cur.execute(
+                            'SELECT COUNT(*) FROM laser_labels WHERE complete = TRUE;')
+                    counts.labels(metric='complete_laser_labels').set(
+                        cur.fetchone()['count'])
+                    with query_timer.labels(query='count_complete_headtail_labels').time():
+                        cur.execute(
+                            'SELECT COUNT(*) FROM headtail_labels WHERE complete = TRUE;')
+                    counts.labels(metric='complete_headtail_labels').set(
                         cur.fetchone()['count'])
                 except Exception as exc:  # pylint: disable=broad-except
                     __log.exception('Summary thread failed due to %s', exc)

@@ -99,9 +99,9 @@ class LabelStudioSync:
         get_gauge('last_label_studio_sync').labels(
             project=19).set_to_current_time()
 
-    def __sync_project_39(self):
+    def __sync_laser_checksum_project(self, projet_id: int):
         export = get_project_export(
-            project_id=39,
+            project_id=projet_id,
             label_studio_api_key=settings.label_studio.api_key,
             label_studio_host=settings.label_studio.host
         )
@@ -123,7 +123,7 @@ class LabelStudioSync:
             )
             con.commit()
         get_gauge('last_label_studio_sync').labels(
-            project=39).set_to_current_time()
+            project=projet_id).set_to_current_time()
 
     def __sync_project_10(self):
         export = get_project_export(
@@ -193,12 +193,14 @@ class LabelStudioSync:
                 self.__log.exception('Syncing project 10 failed! %s', exc)
             if self.stop_event.is_set():
                 break
-            try:
-                self.__sync_project_39()
-            except Exception as exc: # pylint: disable=broad-except
-                self.__log.exception('Syncing project 39 failed! %s', exc)
-            if self.stop_event.is_set():
-                break
+            for laser_project_id in [39, 40]:
+                try:
+                    self.__sync_laser_checksum_project(laser_project_id)
+                except Exception as exc:  # pylint: disable=broad-except
+                    self.__log.exception(
+                        'Syncing project %d failed! %s', laser_project_id, exc)
+                if self.stop_event.is_set():
+                    break
             try:
                 self.__headtail_sync()
             except Exception as exc: # pylint: disable=broad-except
