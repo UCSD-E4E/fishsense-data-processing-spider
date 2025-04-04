@@ -114,7 +114,7 @@ class Crawler:
                         'dive': dive_path
                     }
                 )
-                cksum = cur.fetchall()['md5']
+                cksum = cur.fetchone()['md5']
                 do_query(
                     path='sql/update_dive_cksum.sql',
                     cur=cur,
