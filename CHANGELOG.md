@@ -1,12 +1,28 @@
 # CHANGELOG
 
 
+## v0.24.0 (2025-04-04)
+
+### Features
+
+- Adds complete column to labels
+  ([`d18489a`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/d18489a4ca89703e8045d279674505c7bb041c88))
+
+
 ## v0.23.1 (2025-04-04)
 
 ### Bug Fixes
 
 - Consolidates checksum computation
   ([`144d7f3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/144d7f343eff9943226dd062afd7027e878861cd))
+
+- Fixes query return
+  ([`3e257e8`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/3e257e8d8a730abfbd6dff955fd6ca86476050e4))
+
+### Features
+
+- Adds label studio sync endpoint
+  ([`c42c8d3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c42c8d3c6242d911725be53f2f4166b4df5f0936))
 
 
 ## v0.23.0 (2025-04-02)
