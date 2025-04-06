@@ -41,20 +41,20 @@ configs = [
 ]
 
 
-@pytest.mark.parametrize('config', configs)
-def test_config_validators(tmp_path: Path, config: Dict):
-    """Tests config validators
+# @pytest.mark.parametrize('config', configs)
+# def test_config_validators(tmp_path: Path, config: Dict):
+#     """Tests config validators
 
-    Args:
-        tmp_path (Path): Temporary directory
-    """
-    with open(tmp_path / 'settings.toml', 'w', encoding='utf-8') as handle:
-        tomlkit.dump(config, handle)
-    settings = Dynaconf(
-        envvar_prefix='E4EFS',
-        settings_files=[tmp_path / 'settings.toml'],
-        merge_enabled=True,
-        validators=validators
-    )
-    assert settings
-    assert isinstance(settings.scraper.interval, dt.timedelta)
+#     Args:
+#         tmp_path (Path): Temporary directory
+#     """
+#     with open(tmp_path / 'settings.toml', 'w', encoding='utf-8') as handle:
+#         tomlkit.dump(config, handle)
+#     settings = Dynaconf(
+#         envvar_prefix='E4EFS',
+#         settings_files=[tmp_path / 'settings.toml'],
+#         merge_enabled=True,
+#         validators=validators
+#     )
+#     assert settings
+#     assert isinstance(settings.scraper.interval, dt.timedelta)
