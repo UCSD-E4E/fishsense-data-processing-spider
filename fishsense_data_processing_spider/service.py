@@ -2,10 +2,12 @@
 '''
 import asyncio
 import datetime as dt
+import json
 import logging
 import time
 from pathlib import Path
 from threading import Thread
+from typing import Dict, List
 
 import psycopg
 import psycopg.rows
@@ -47,12 +49,13 @@ class Service:
     # Main entry point
 
     def __init__(self):
-        self.__validate_data_paths()
+        data_paths = self.__validate_data_paths()
         self.__label_studio = LabelStudioSync()
+
         self.__crawler = Crawler(
             data_paths=[
                 Path(data_path)
-                for data_path in settings.scraper.data_paths
+                for data_path in data_paths
             ],
             conn_str=PG_CONN_STR,
             interval=settings.scraper.interval,
@@ -166,7 +169,7 @@ class Service:
 
         self.__webapp = tornado.web.Application(web_routes)
 
-    def __validate_data_paths(self):
+    def __validate_data_paths(self) -> List[Path]:
         # This isn't working!  not sure why
         # path_validators = [Validator(
         #     'scraper.data_paths',
@@ -174,10 +177,15 @@ class Service:
         # )]
         # settings.validators.register(*path_validators)
         # settings.validators.validate()
-        for data_dir in settings.scraper.data_paths:
+        with open(settings.scraper.data_paths, 'r', encoding='utf-8') as handle:
+            data_path_mappings: List[Dict[str, str]] = json.load(handle)[
+                'data_paths']
+        data_paths = [mapping['mount'] for mapping in data_path_mappings]
+        for data_dir in data_paths:
             data_path = Path(data_dir)
             if not data_path.is_dir():
                 raise RuntimeError('Data path is not a directory!')
+        return data_paths
 
     def __summary_loop(self):
         __log = logging.getLogger('summary')

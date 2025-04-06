@@ -71,12 +71,9 @@ def get_cache_path() -> Path:
 validators = [
     Validator(
         'scraper.data_paths',
-        cast=list,
-        required=True
-    ),
-    Validator(
-        'scraper.data_paths',
-        condition=lambda x: all(Path(y) is not None for y in x)
+        cast=Path,
+        required=True,
+        condition=lambda x: Path(x).is_file()
     ),
     Validator(
         'scraper.interval',

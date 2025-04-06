@@ -14,9 +14,7 @@ configs = [
     {
         'scraper': {
             'interval': '15s',
-            'data_paths': [
-                '//e4e-nas.ucsd.edu/fishsense_data/REEF/data/'
-            ]
+            'data_paths': './README.md'
         },
         'postgres': {
             'username': 'postgres',
@@ -29,9 +27,7 @@ configs = [
     },
     {
         'scraper': {
-            'data_paths': [
-                '//e4e-nas.ucsd.edu/fishsense_data/REEF/data/'
-            ]
+            'data_paths': './README.md'
         },
         'postgres': {
             'username': 'postgres',
