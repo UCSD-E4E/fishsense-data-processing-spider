@@ -11,9 +11,9 @@ import numpy as np
 import psycopg
 from psycopg.rows import dict_row
 
-from fishsense_data_processing_spider.backend import (
-    get_camera_sns, get_dive_checksum_from_query, get_file_checksum,
-    get_image_date)
+from fishsense_data_processing_spider.backend import (get_camera_sns,
+                                                      get_file_checksum,
+                                                      get_image_date)
 from fishsense_data_processing_spider.config import get_log_path
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_counter, get_gauge,

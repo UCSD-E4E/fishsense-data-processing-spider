@@ -16,6 +16,7 @@ class Permission(enum.Enum):
     """
     DO_DISCOVERY = 'doDiscovery'
     DO_LABEL_STUDIO_SYNC = 'doLabelStudioSync'
+    GET_RAW_FILE = 'getRawFile'
 
 class KeyStore:
     """API Key Store
@@ -80,6 +81,11 @@ class KeyStore:
                 cur.execute(
                     'UPDATE version SET version=3;'
                 )
+            if version < 4:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN getRawFile INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=4;')
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'

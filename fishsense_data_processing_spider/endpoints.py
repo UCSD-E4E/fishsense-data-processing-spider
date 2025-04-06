@@ -18,8 +18,8 @@ from fishsense_data_processing_spider.orchestrator import (JobStatus,
                                                            Orchestrator)
 from fishsense_data_processing_spider.web_auth import KeyStore, Permission
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
-
-# pylint: disable=abstract-method, arguments-differ
+from fishsense_data_processing_spider.data_model import DataModel
+# pylint: disable=abstract-method, arguments-differ, attribute-defined-outside-init
 # This is typical behavior for tornado
 
 class BaseHandler(RequestHandler):
@@ -253,6 +253,8 @@ class DoDiscoveryHandler(AuthenticatedHandler):
 
 
 class DoLabelStudioSyncHandler(AuthenticatedHandler):
+    """Label Studio Sync execution endpoing
+    """
     SUPPORTED_METHODS = ('POST', 'OPTIONS')
 
     def initialize(self, key_store: KeyStore, label_studio: LabelStudioSync):
@@ -273,3 +275,28 @@ class DoLabelStudioSyncHandler(AuthenticatedHandler):
         """
         self.authenticate(Permission.DO_LABEL_STUDIO_SYNC)
         self._label_studio.sleep_interrupt.set()
+
+
+class RawDataHandler(AuthenticatedHandler):
+    """Raw Data Handler
+    """
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('RawDataHandler')
+        return super().initialize(key_store)
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File checksum
+        """
+        self.authenticate(Permission.GET_RAW_FILE)
+        blob = self._data_model.get_raw_file_bytes(checksum)
+        self._logger.debug('Retrieved %d bytes', len(blob))
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.write(blob)
+        self.flush()
+        self.finish()

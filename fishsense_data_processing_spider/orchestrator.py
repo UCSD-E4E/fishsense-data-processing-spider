@@ -89,7 +89,7 @@ class Orchestrator:
                                         reaped_job['image_md5'],
                                         reaped_job['job_id'])
                         reaped_ids.append(reaped_job['job_id'])
-                        reaped_job_counter.inc()
+                        reaped_job_counter.labels(job='preprocess').inc()
                 except psycopg.errors.Error as exc:
                     self.__log.exception(
                         'Reaping preprocess jobs failed! %s', exc)

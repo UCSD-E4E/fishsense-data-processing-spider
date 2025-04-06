@@ -20,10 +20,12 @@ from tornado.routing import URLSpec
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
                                                      configure_logging,
                                                      settings)
+from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
     DoDiscoveryHandler, DoLabelStudioSyncHandler, HomePageHandler,
-    JobStatusHandler, NotImplementedHandler, RetrieveBatch, VersionHandler)
+    JobStatusHandler, NotImplementedHandler, RawDataHandler, RetrieveBatch,
+    VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -51,12 +53,14 @@ class Service:
     def __init__(self):
         data_paths = self.__validate_data_paths()
         self.__label_studio = LabelStudioSync()
+        self._data_model = DataModel(
+            data_path_mapping=data_paths,
+            pg_conn_str=PG_CONN_STR,
+            max_raw_data_file_size=settings.data_model.max_load_size
+        )
 
         self.__crawler = Crawler(
-            data_paths=[
-                Path(data_path)
-                for data_path in data_paths
-            ],
+            data_paths=list(data_paths.values()),
             conn_str=PG_CONN_STR,
             interval=settings.scraper.interval,
         )
@@ -118,8 +122,12 @@ class Service:
                 }
             ),
             URLSpec(
-                pattern=r'/api/v1/data/raw/(.+)$',
-                handler=NotImplementedHandler
+                pattern=r'/api/v1/data/raw/(?P<checksum>.+)$',
+                handler=RawDataHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
             ),
             URLSpec(
                 pattern=r'/api/v1/data/raw$',
@@ -169,7 +177,7 @@ class Service:
 
         self.__webapp = tornado.web.Application(web_routes)
 
-    def __validate_data_paths(self) -> List[Path]:
+    def __validate_data_paths(self) -> Dict[Path, Path]:
         # This isn't working!  not sure why
         # path_validators = [Validator(
         #     'scraper.data_paths',
@@ -180,10 +188,10 @@ class Service:
         with open(settings.scraper.data_paths, 'r', encoding='utf-8') as handle:
             data_path_mappings: List[Dict[str, str]] = json.load(handle)[
                 'data_paths']
-        data_paths = [mapping['mount'] for mapping in data_path_mappings]
-        for data_dir in data_paths:
-            data_path = Path(data_dir)
-            if not data_path.is_dir():
+        data_paths = {Path(mapping['unc_path']): Path(mapping['mount'])
+                      for mapping in data_path_mappings}
+        for data_dir in data_paths.values():
+            if not data_dir.is_dir():
                 raise RuntimeError('Data path is not a directory!')
         return data_paths
 

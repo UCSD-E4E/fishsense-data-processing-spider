@@ -1,14 +1,15 @@
 services:
   spider:
-    image: ghcr.io/ucsd-e4e/fishsense-data-processing-spider:latest
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    # image: ghcr.io/ucsd-e4e/fishsense-data-processing-spider:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: fishsense_data_processing_spider
     volumes:
       - fishsense_data_reef:/mnt/fishsense_data_reef:ro
       - ./settings.toml:/e4efs/config/settings.toml:ro
       - ./.secrets.toml:/e4efs/config/.secrets.toml:ro
+      - ./data_paths.json:/e4efs/config/data_paths.json:ro
       - ./data:/e4efs/data:rw
       - ./logs:/e4efs/logs:rw
       - ./cache:/e4efs/cache:rw
@@ -18,6 +19,7 @@ services:
       E4EFS_POSTGRES__PASSWORD_FILE: /run/secrets/postgres_admin_password
     ports:
       - 9095:9090
+      - 8083:80
     secrets:
       - postgres_admin_password
     deploy:

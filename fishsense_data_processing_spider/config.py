@@ -12,7 +12,7 @@ from typing import Dict
 import platformdirs
 import validators
 from dynaconf import Dynaconf, Validator
-from humanfriendly import parse_timespan
+from humanfriendly import parse_timespan, parse_size
 
 IS_DOCKER = os.environ.get('E4EFS_DOCKER', False)
 platform_dirs = platformdirs.PlatformDirs('e4efs_spider')
@@ -140,6 +140,11 @@ validators = [
         'orchestrator.reaper_interval',
         cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
         default='5m'
+    ),
+    Validator(
+        'data_model.max_load_size',
+        cast=parse_size,
+        default='20M'
     )
 ]
 
