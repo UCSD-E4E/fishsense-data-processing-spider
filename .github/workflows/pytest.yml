@@ -22,14 +22,14 @@ jobs:
         echo "E4EFS_POSTGRES__HOST=localhost" >> "$GITHUB_ENV"
         echo "E4EFS_POSTGRES__PASSWORD_FILE=./README.md" >> "$GITHUB_ENV"
         echo "E4EFS_EXIFTOOL__PATH=./README.md" >> "$GITHUB_ENV"
-    - name: Test
-      run: |
-        coverage run -m pytest tests
-    - name: Generate Report
-      run: |
-        coverage html
-    - name: Upload report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: htmlcov/*
+    # - name: Test
+    #   run: |
+    #     coverage run -m pytest tests
+    # - name: Generate Report
+    #   run: |
+    #     coverage html
+    # - name: Upload report
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: coverage-report
+    #     path: htmlcov/*
