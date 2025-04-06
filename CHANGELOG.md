@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v0.25.0 (2025-04-06)
+
+### Continuous Integration
+
+- Disables config testing
+  ([`764537f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/764537f3b1760db0f70f602fc619e2b996c7f50a))
+
+- Disabling all tests
+  ([`1f037b9`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/1f037b90dab1f16fd9c0fba6f17330c24d0ae1a8))
+
+### Features
+
+- Adds UNC path column
+  ([`6ee18c3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6ee18c3572cbfbb1ac9b9dffa792bc7b49b6be4e))
+
+- Implements getRawFile
+  ([`9d33a74`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9d33a74d933dd9e6e2b6aace95b998721ab8ea2f))
+
+- Switches to separate file for datapath mapping
+  ([`4d0d0d7`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/4d0d0d73973771dc9a81450b12edfecbc3c38121))
+
+
 ## v0.24.0 (2025-04-04)
 
 ### Features
