@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.28.0 (2025-04-07)
+
+### Features
+
+- Adds job completed
+  ([`dbde633`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/dbde63361281f2cac0067e4d008f01d470e62fd4))
+
+
 ## v0.27.0 (2025-04-07)
 
 ### Documentation
