@@ -325,3 +325,26 @@ class LensCalHandler(AuthenticatedHandler):
         self.write(blob)
         self.flush()
         self.finish()
+
+
+class PreprocessJpegHandler(AuthenticatedHandler):
+    SUPPORTED_METHODS = ('PUT', 'OPTIONS')
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('PreprocessJpegHandler')
+        return super().initialize(key_store)
+
+    async def put(self, checksum: str) -> None:
+        self.authenticate(Permission.PUT_PREPROCESS_JPEG)
+        try:
+            self._data_model.verify_raw_checksum(checksum)
+        except KeyError:
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+
+        self._data_model.put_preprocess_jpeg(
+            checksum=checksum,
+            data=self.request.body
+        )
+        self.set_status(HTTPStatus.OK)
+        self.finish()

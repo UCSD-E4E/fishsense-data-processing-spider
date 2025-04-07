@@ -145,6 +145,10 @@ validators = [
         'data_model.max_load_size',
         cast=parse_size,
         default='20M'
+    ),
+    Validator(
+        'data_model.preprocess_jpg_store',
+        cast=Path
     )
 ]
 

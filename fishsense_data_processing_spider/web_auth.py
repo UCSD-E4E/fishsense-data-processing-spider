@@ -17,11 +17,11 @@ class Permission(enum.Enum):
     DO_DISCOVERY = 'doDiscovery'
     DO_LABEL_STUDIO_SYNC = 'doLabelStudioSync'
     GET_RAW_FILE = 'getRawFile'
+    PUT_PREPROCESS_JPEG = 'putPreprocessedFrame'
 
 class KeyStore:
     """API Key Store
     """
-    VERSION = 3
     ITERATIONS = 200000
 
     def __init__(self,
@@ -86,6 +86,11 @@ class KeyStore:
                     'ALTER TABLE keys ADD COLUMN getRawFile INTEGER DEFAULT FALSE;'
                 )
                 cur.execute('UPDATE version SET version=4;')
+            if version < 5:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN putPreprocessedFrame INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=5;')
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'

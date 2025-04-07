@@ -16,6 +16,7 @@ class DataModel:
     def __init__(self,
                  data_path_mapping: Dict[Path, Path],
                  pg_conn_str: str,
+                 preprocess_jpeg_path: Path,
                  *,
                  max_raw_data_file_size: int = 20_000_000
                  ):
@@ -23,6 +24,7 @@ class DataModel:
         self._pg_conn = pg_conn_str
         self._log = logging.getLogger('DataModel')
         self._max_raw_data_size = max_raw_data_file_size
+        self._preprocess_jpg_store = preprocess_jpeg_path
 
     def get_lens_cal_bytes(self, camera_id: int) -> bytes:
         """Retrieves the lens calibration package
@@ -49,6 +51,9 @@ class DataModel:
             raise KeyError(f'{camera_id} is not a recognized camera')
         path = Path(result['path'])
         local_path = self.map_local_path(path)
+        if not local_path.is_file():
+            raise FileNotFoundError(f'{local_path} not found!')
+
         with open(local_path, 'rb') as handle:
             return handle.read(self._max_raw_data_size)
 
@@ -66,6 +71,26 @@ class DataModel:
         Returns:
             bytes: Raw file bytes
         """
+        path = self.verify_raw_checksum(checksum)
+        local_path = self.map_local_path(path)
+        if not local_path.is_file():
+            raise FileNotFoundError(f'{local_path} not found!')
+
+        with open(local_path, 'rb') as handle:
+            return handle.read(self._max_raw_data_size)
+
+    def verify_raw_checksum(self, checksum: str) -> Path:
+        """Verifies the raw checksum
+
+        Args:
+            checksum (str): Raw file checksum
+
+        Raises:
+            KeyError: Checksum does not exist
+
+        Returns:
+            Path: UNC path to raw file
+        """
         with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
             do_query(
                 path='sql/select_unc_path_by_cksum.sql',
@@ -78,9 +103,7 @@ class DataModel:
         if result is None:
             raise KeyError(f'{checksum} is not a recognized checksum')
         path = Path(result['path'])
-        local_path = self.map_local_path(path)
-        with open(local_path, 'rb') as handle:
-            return handle.read(self._max_raw_data_size)
+        return path
 
     def map_local_path(self, unc_path: Path) -> Path:
         """Map UNC path to local path
@@ -109,6 +132,17 @@ class DataModel:
         self._log.debug('volume: %s', volume.as_posix())
         self._log.debug('mount: %s', mount.as_posix())
         self._log.debug('local_path: %s', local_path.as_posix())
-        if not local_path.is_file():
-            raise FileNotFoundError(f'{local_path} not found!')
         return local_path
+
+    def put_preprocess_jpeg(self, checksum: str, data: bytes) -> None:
+        """Put Preprocessed JPEG
+
+        Args:
+            checksum (str): Raw File checksum
+            data (bytes): File data
+        """
+        final_path = self._preprocess_jpg_store / (checksum + '.JPG')
+        local_path = self.map_local_path(final_path)
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_path, 'wb') as handle:
+            handle.write(data)
