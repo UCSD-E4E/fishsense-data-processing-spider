@@ -146,3 +146,13 @@ class DataModel:
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, 'wb') as handle:
             handle.write(data)
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/update_preprocess_jpeg_path.sql',
+                cur=cur,
+                params={
+                    'unc_path': final_path,
+                    'cksum': checksum
+                }
+            )
+            con.commit()
