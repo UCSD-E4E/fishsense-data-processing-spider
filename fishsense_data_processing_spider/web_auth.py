@@ -8,7 +8,7 @@ import logging
 import secrets
 import sqlite3
 from pathlib import Path
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
 
 
 class Permission(enum.Enum):
@@ -27,6 +27,7 @@ class KeyStore:
     def __init__(self,
                  path: Path):
         self.__log = logging.getLogger('keystore')
+        self.__log.setLevel(logging.INFO)
         self.__path = path
         self.__salt: str = None
         self.__iterations: int = self.ITERATIONS
