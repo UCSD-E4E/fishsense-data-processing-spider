@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v0.26.0 (2025-04-07)
+
+### Bug Fixes
+
+- Adds diveId
+  ([`c636566`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c63656641f9f7ce03af83b9366b1de2aaa3faba7))
+
+- Adds help text to cli
+  ([`62baadc`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/62baadc8bedf2d625e6efaa10cad6716a9aa22b1))
+
+- Adds operation tag
+  ([`7d8dfe0`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/7d8dfe02e0bd6a4b2fa92e314d43686c2d2be08e))
+
+### Features
+
+- Adds lens cal retrieval
+  ([`c9cd3c7`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c9cd3c7e1e7cb2719808aec42bf537a6365776ce))
+
+
 ## v0.25.0 (2025-04-06)
 
 ### Continuous Integration
