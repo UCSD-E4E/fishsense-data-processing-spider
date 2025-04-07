@@ -328,6 +328,8 @@ class LensCalHandler(AuthenticatedHandler):
 
 
 class PreprocessJpegHandler(AuthenticatedHandler):
+    """Preprocess Jpeg handler
+    """
     SUPPORTED_METHODS = ('PUT', 'OPTIONS')
 
     def initialize(self, key_store, data_model: DataModel):
@@ -336,6 +338,14 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         return super().initialize(key_store)
 
     async def put(self, checksum: str) -> None:
+        """Put Method Handler
+
+        Args:
+            checksum (str): Raw File Checksum
+
+        Raises:
+            HTTPError: Not Found
+        """
         self.authenticate(Permission.PUT_PREPROCESS_JPEG)
         try:
             self._data_model.verify_raw_checksum(checksum)
