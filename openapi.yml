@@ -484,6 +484,7 @@ paths:
               - cancelled
               - failed
               - expired
+              - completed
         - name: progress
           in: query
           schema:

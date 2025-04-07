@@ -23,6 +23,7 @@ class JobStatus(enum.StrEnum):
     CANCELLED = 'cancelled'
     FAILED = 'failed'
     EXPIRED = 'expired'
+    COMPLETED = 'completed'
 
 
 JOB_STATUS_MAPPING = {
@@ -31,6 +32,7 @@ JOB_STATUS_MAPPING = {
     JobStatus.CANCELLED: 2,
     JobStatus.FAILED: 3,
     JobStatus.EXPIRED: 4,
+    JobStatus.COMPLETED: 5
 }
 
 class Orchestrator:
