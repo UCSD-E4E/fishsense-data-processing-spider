@@ -48,6 +48,7 @@ def __get_api_key_setup(subparsers: argparse._SubParsersAction[argparse.Argument
     get_api_key_parser.add_argument(
         '-e', '--expires',
         type=dt.datetime.fromisoformat,
+        help='Expiration timestamp in ISO 8601',
         default=None
     )
     get_api_key_parser.set_defaults(func=_get_api_key)
