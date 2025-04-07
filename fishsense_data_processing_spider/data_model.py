@@ -23,6 +23,7 @@ class DataModel:
         self._data_path_mapping = data_path_mapping
         self._pg_conn = pg_conn_str
         self._log = logging.getLogger('DataModel')
+        self._log.setLevel(logging.INFO)
         self._max_raw_data_size = max_raw_data_file_size
         self._preprocess_jpg_store = preprocess_jpeg_path
 
