@@ -144,7 +144,8 @@ class Orchestrator:
                 job_definitions = {
                     'jobId': job_id.hex,
                     'frameIds': row['checksums'],
-                    'cameraId': row['camera_idx']
+                    'cameraId': row['camera_idx'],
+                    'operation': 'preprocess'
                 }
                 job_document['jobs'].append(job_definitions)
                 do_query(
