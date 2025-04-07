@@ -151,7 +151,7 @@ class DataModel:
                 path='sql/update_preprocess_jpeg_path.sql',
                 cur=cur,
                 params={
-                    'unc_path': final_path,
+                    'unc_path': final_path.as_posix(),
                     'cksum': checksum
                 }
             )
