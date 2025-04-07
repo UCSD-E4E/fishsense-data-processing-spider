@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.27.0 (2025-04-07)
+
+### Documentation
+
+- Adds docstrings
+  ([`6a829d1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6a829d18714e3d1ec17b5ab95cf5db6f984740aa))
+
+### Features
+
+- Adds put_preprocess_jpeg
+  ([`3b5a55f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/3b5a55f59d9b03c272bc34ba6054d5579f30c448))
+
+- Adds working directory
+  ([`27ca2f6`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/27ca2f66093d932331abf37d15df659ccb30bb22))
+
+
 ## v0.26.0 (2025-04-07)
 
 ### Bug Fixes
