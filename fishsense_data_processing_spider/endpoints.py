@@ -300,3 +300,28 @@ class RawDataHandler(AuthenticatedHandler):
         self.write(blob)
         self.flush()
         self.finish()
+
+
+class LensCalHandler(AuthenticatedHandler):
+    """Lens Calibration Data Handler
+    """
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('LensCalHandler')
+        return super().initialize(key_store)
+
+    async def get(self, camera_id: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File checksum
+        """
+        self.authenticate(Permission.GET_RAW_FILE)
+        blob = self._data_model.get_lens_cal_bytes(camera_id)
+        self._logger.debug('Retrieved %d bytes', len(blob))
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.write(blob)
+        self.flush()
+        self.finish()

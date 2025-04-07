@@ -25,7 +25,7 @@ from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
     DoDiscoveryHandler, DoLabelStudioSyncHandler, HomePageHandler,
     JobStatusHandler, NotImplementedHandler, RawDataHandler, RetrieveBatch,
-    VersionHandler)
+    VersionHandler, LensCalHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -154,8 +154,12 @@ class Service:
                 handler=NotImplementedHandler
             ),
             URLSpec(
-                pattern=r'/api/v1/data/lens_cal/(.+)$',
-                handler=NotImplementedHandler
+                pattern=r'/api/v1/data/lens_cal/(?P<camera_id>.+)$',
+                handler=LensCalHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
             ),
             URLSpec(
                 pattern=r'/api/v1/control/discover$',

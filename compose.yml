@@ -13,6 +13,7 @@ services:
       - ./data:/e4efs/data:rw
       - ./logs:/e4efs/logs:rw
       - ./cache:/e4efs/cache:rw
+      - fishsense_lens_cal:/mnt/fishsense_lens_cal:ro
     environment:
       E4EFS_POSTGRES__USERNAME: postgres
       E4EFS_POSTGRES__HOST: postgres
@@ -52,4 +53,6 @@ secrets:
 
 volumes:
   fishsense_data_reef:
-   external: true
+    external: true
+  fishsense_lens_cal:
+    external: true
