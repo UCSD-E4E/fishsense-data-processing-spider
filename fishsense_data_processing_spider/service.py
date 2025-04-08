@@ -52,7 +52,12 @@ class Service:
 
     def __init__(self):
         data_paths = self.__validate_data_paths()
-        self.__label_studio = LabelStudioSync()
+        self.__label_studio = LabelStudioSync(
+            root_url=settings.web_api.root_url,
+            label_studio_host=settings.label_studio.host,
+            label_studio_key=settings.label_studio.api_key,
+            pg_conn_str=PG_CONN_STR
+        )
         self._data_model = DataModel(
             data_path_mapping=data_paths,
             pg_conn_str=PG_CONN_STR,

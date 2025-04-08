@@ -149,6 +149,11 @@ validators = [
     Validator(
         'data_model.preprocess_jpg_store',
         cast=Path
+    ),
+    Validator(
+        'web_api.root_url',
+        cast=str,
+        required=True
     )
 ]
 
