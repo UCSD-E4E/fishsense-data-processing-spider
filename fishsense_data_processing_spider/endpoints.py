@@ -373,3 +373,16 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         )
         self.set_status(HTTPStatus.OK)
         self.finish()
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File checksum
+        """
+        blob = self._data_model.get_preprocess_jpeg(checksum)
+        self._logger.debug('Retrieved %d bytes', len(blob))
+        self.set_header('Content-Type', 'image/jpeg')
+        self.write(blob)
+        self.flush()
+        self.finish()

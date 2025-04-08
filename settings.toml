@@ -1,6 +1,6 @@
 [scraper]
 interval = "1h"
-data_paths = "/e4efs/config/data_paths.json"
+data_paths = "data_paths.json"
 
 [summary]
 interval = "2m"

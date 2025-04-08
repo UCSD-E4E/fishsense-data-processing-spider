@@ -19,6 +19,7 @@ services:
       E4EFS_POSTGRES__USERNAME: postgres
       E4EFS_POSTGRES__HOST: postgres
       E4EFS_POSTGRES__PASSWORD_FILE: /run/secrets/postgres_admin_password
+      E4EFS_SCRAPER__DATA_PATHS: /e4efs/config/data_paths.json
     ports:
       - 9095:9090
       - 8083:80

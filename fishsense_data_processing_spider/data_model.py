@@ -157,3 +157,24 @@ class DataModel:
                 }
             )
             con.commit()
+
+    def get_preprocess_jpeg(self, checksum: str) -> bytes:
+        """Retrievs the preprocess jpeg data
+
+        Args:
+            checksum (str): Raw File checksum
+
+        Raises:
+            FileNotFoundError: File not found
+
+        Returns:
+            bytes: Binary contents of file
+        """
+        self.verify_raw_checksum(checksum=checksum)
+        final_path = self._preprocess_jpg_store / (checksum + '.JPG')
+        local_path = self.map_local_path(final_path)
+        if not local_path.is_file():
+            raise FileNotFoundError(f'{local_path} not found!')
+
+        with open(local_path, 'rb') as handle:
+            return handle.read(self._max_raw_data_size)
