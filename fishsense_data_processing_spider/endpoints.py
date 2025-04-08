@@ -383,6 +383,10 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         blob = self._data_model.get_preprocess_jpeg(checksum)
         self._logger.debug('Retrieved %d bytes', len(blob))
         self.set_header('Content-Type', 'image/jpeg')
+        self.set_header(
+            'Cache-Control',
+            'max-age=3600, must-revalidate, no-transform, immutable'
+        )
         self.write(blob)
         self.flush()
         self.finish()
