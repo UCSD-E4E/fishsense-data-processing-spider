@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.30.0 (2025-04-08)
+
+### Features
+
+- Adds cache-control header
+  ([`7c4df6b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/7c4df6b57b8f64a39dfede0d1c9ebd8afc3cbb31))
+
+
 ## v0.29.0 (2025-04-08)
 
 ### Bug Fixes
