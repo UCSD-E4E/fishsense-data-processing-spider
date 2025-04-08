@@ -29,6 +29,12 @@ services:
       resources:
         limits:
           memory: 4G
+    labels:
+      caddy: orchestrator.fishsense.e4e.ucsd.edu
+      caddy.reverse_proxy: "{{upstreams 80}}"
+    networks:
+      - caddy_proxy
+      - default
 
   postgres:
     image: postgres:16.4
@@ -59,4 +65,8 @@ volumes:
   fishsense_lens_cal:
     external: true
   fishsense_process_work:
+    external: true
+
+networks:
+  caddy_proxy:
     external: true
