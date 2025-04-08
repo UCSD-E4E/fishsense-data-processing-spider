@@ -27,23 +27,35 @@ class BaseHandler(RequestHandler):
     """
 
     def prepare(self):
+        if hasattr(self, 'PATH_OVERRIDE'):
+            request_path = self.PATH_OVERRIDE
+        else:
+            request_path = self.request.path
         request_counter = get_counter(
             name='request_call'
         )
-        request_counter.labels(endpoint=self.request.path).inc()
+        request_counter.labels(endpoint=request_path).inc()
         return super().prepare()
 
     def on_finish(self):
+        if hasattr(self, 'PATH_OVERRIDE'):
+            request_path = self.PATH_OVERRIDE
+        else:
+            request_path = self.request.path
         request_counter = get_counter(
             name='request_result'
         )
         request_counter.labels(
-            endpoint=self.request.path,
+            endpoint=request_path,
             code=self._status_code
         ).inc()
 
     async def _execute(self, transforms, *args, **kwargs):
-        with get_summary('request_timing').labels(endpoint=self.request.path).time():
+        if hasattr(self, 'PATH_OVERRIDE'):
+            request_path = self.PATH_OVERRIDE
+        else:
+            request_path = self.request.path
+        with get_summary('request_timing').labels(endpoint=request_path).time():
             await super()._execute(transforms, *args, **kwargs)
 
     def set_default_headers(self):
@@ -281,6 +293,7 @@ class RawDataHandler(AuthenticatedHandler):
     """Raw Data Handler
     """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/data/raw'
 
     def initialize(self, key_store, data_model: DataModel):
         self._data_model = data_model
@@ -306,6 +319,7 @@ class LensCalHandler(AuthenticatedHandler):
     """Lens Calibration Data Handler
     """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/data/lens_cal'
 
     def initialize(self, key_store, data_model: DataModel):
         self._data_model = data_model
@@ -330,7 +344,8 @@ class LensCalHandler(AuthenticatedHandler):
 class PreprocessJpegHandler(AuthenticatedHandler):
     """Preprocess Jpeg handler
     """
-    SUPPORTED_METHODS = ('PUT', 'OPTIONS')
+    SUPPORTED_METHODS = ('PUT', 'OPTIONS', 'GET')
+    PATH_OVERRIDE = '/api/v1/data/preprocess_jpeg'
 
     def initialize(self, key_store, data_model: DataModel):
         self._data_model = data_model
