@@ -1,6 +1,43 @@
 # CHANGELOG
 
 
+## v0.29.0 (2025-04-08)
+
+### Bug Fixes
+
+- Adds dates to calibration tables
+  ([`a215058`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a2150580b6b16c80009e9e4b1fe1cb166103dce5))
+
+- Fixes metric labels
+  ([`2bb209e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2bb209e6ae4bfbf7d584babd0aaa79666f2793e8))
+
+- Fixes UNC sql
+  ([`465502e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/465502e4066f6aca3523fb9260958e8e783383fa))
+
+- Suppresses logging
+  ([`ee0f0b3`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ee0f0b354081f7fc717cf44cc181c921f62258d1))
+
+- Suppressing logging
+  ([`2e267e8`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2e267e88477612a684938e6dab7eec5a41e016d3))
+
+### Features
+
+- Adds calibration tables
+  ([`dda0689`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/dda06898c9630c835d43d9068a16239d878f96d6))
+
+- Adds get preprocess_jpeg
+  ([`3cdb9b1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/3cdb9b1a66219dee91bf7b1059f725997903ba12))
+
+- Adds label studio sync for preprocess jpegs
+  ([`a353c62`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a353c62ef1b0d43389171cd07e385ec9557258f6))
+
+- Adds preprocess_jpeg_path
+  ([`49e4326`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/49e4326f3ca61b5d91507e4367af96f5282a4ec8))
+
+- Adds TLS
+  ([`10b621c`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/10b621cdbbe89203ae94efabeae9f64803c667bf))
+
+
 ## v0.28.0 (2025-04-07)
 
 ### Features
