@@ -23,5 +23,11 @@ CREATE TABLE depth_cal (
     calibration_data TEXT NOT NULL REFERENCES canonical_dives(checksum)
 )
 ;
+
+ALTER TABLE lens_cal
+ADD COLUMN date DATE NOT NULL;
+ALTER TABLE depth_cal
+ADD COLUMN date DATE NOT NULL;
+
 GRANT SELECT, UPDATE, INSERT ON TABLE lens_cal TO ccrutchf;
 GRANT SELECT, UPDATE, INSERT ON TABLE depth_cal TO ccrutchf;
