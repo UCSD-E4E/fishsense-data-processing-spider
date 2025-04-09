@@ -4,6 +4,7 @@ import asyncio
 import datetime as dt
 import json
 import logging
+import signal
 import time
 from pathlib import Path
 from threading import Thread
@@ -24,8 +25,9 @@ from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
     DoDiscoveryHandler, DoLabelStudioSyncHandler, HomePageHandler,
-    JobStatusHandler, LensCalHandler, NotImplementedHandler,
-    PreprocessJpegHandler, RawDataHandler, RetrieveBatch, VersionHandler)
+    JobStatusHandler, LaserLabelHandler, LensCalHandler, NotImplementedHandler,
+    PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
+    RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -62,7 +64,8 @@ class Service:
             data_path_mapping=data_paths,
             pg_conn_str=PG_CONN_STR,
             max_raw_data_file_size=settings.data_model.max_load_size,
-            preprocess_jpeg_path=settings.data_model.preprocess_jpg_store
+            preprocess_jpeg_path=settings.data_model.preprocess_jpg_store,
+            preprocess_laser_jpeg_path=settings.data_model.preprocess_laser_jpg_store,
         )
 
         self.__crawler = Crawler(
@@ -72,6 +75,7 @@ class Service:
         )
 
         self.stop_event = asyncio.Event()
+        signal.signal(signal.SIGTERM, self.stop_event.set)
         start_time = dt.datetime.now(tz=pytz.UTC)
 
         self.__summary_thread = Thread(
@@ -149,11 +153,19 @@ class Service:
             ),
             URLSpec(
                 pattern=r'/api/v1/data/laser_jpeg/(.+)$',
-                handler=NotImplementedHandler
+                handler=PreprocessLaserJpegHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
             ),
             URLSpec(
                 pattern=r'/api/v1/data/laser/(.+)$',
-                handler=NotImplementedHandler
+                handler=LaserLabelHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
             ),
             URLSpec(
                 pattern=r'/api/v1/data/head_tail/(.+)$',

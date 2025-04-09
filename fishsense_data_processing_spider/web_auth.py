@@ -18,6 +18,9 @@ class Permission(enum.Enum):
     DO_LABEL_STUDIO_SYNC = 'doLabelStudioSync'
     GET_RAW_FILE = 'getRawFile'
     PUT_PREPROCESS_JPEG = 'putPreprocessedFrame'
+    GET_LASER_LABEL = 'getLaserLabel'
+    GET_LASER_FRAME = 'getLaserFrame'
+    PUT_LASER_FRAME = 'putLaserFrame'
 
 class KeyStore:
     """API Key Store
@@ -92,6 +95,19 @@ class KeyStore:
                     'ALTER TABLE keys ADD COLUMN putPreprocessedFrame INTEGER DEFAULT FALSE;'
                 )
                 cur.execute('UPDATE version SET version=5;')
+            if version < 6:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN getLaserLabel INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=6;')
+            if version < 7:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN getLaserFrame INTEGER DEFAULT FALSE;'
+                )
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN putLaserFrame INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=7;')
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'

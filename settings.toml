@@ -15,3 +15,4 @@ root_url = 'http://localhost:80'
 
 [data_model]
 preprocess_jpg_store = '//e4e-nas.ucsd.edu/fishsense_process_work/preprocess_jpeg'
+preprocess_laser_jpg_store = '//e4e-nas.ucsd.edu/fishsense_process_work/preprocess_laser_jpeg'

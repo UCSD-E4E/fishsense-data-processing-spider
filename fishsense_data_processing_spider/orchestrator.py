@@ -112,6 +112,110 @@ class Orchestrator:
             time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
             self.stop_event.wait(time_to_sleep)
 
+    def _get_headtail_preprocess_frames(self,
+                                        job_document: Dict,
+                                        image_limit: int,
+                                        cur: psycopg.Cursor,
+                                        worker: str,
+                                        expiration: dt.timedelta,
+                                        origin: str
+                                        ) -> int:
+        do_query(
+            path='sql/select_next_images_for_headtail_preprocessing.sql',
+            cur=cur,
+            params={
+                'limit': image_limit
+            }
+        )
+        results: List[Dict[str, Any]] = cur.fetchall()
+        n_images = 0
+        for row in results:
+            job_id = uuid.uuid4()
+            job_definitions = {
+                'jobId': job_id.hex,
+                'frameIds': row['checksums'],
+                'cameraId': row['camera_idx'],
+                'operation': 'preprocess_with_laser',
+                'diveId': None
+            }
+            n_images += len(row['checksums'])
+            job_document['jobs'].append(job_definitions)
+            do_query(
+                path='sql/insert_job.sql',
+                cur=cur,
+                params={
+                    'job_id': job_id,
+                    'worker': worker,
+                    'job_type': 'preprocess_with_laser',
+                    'expiration': dt.datetime.now() + expiration,
+                    'origin': origin
+                }
+            )
+            do_many_query(
+                path='sql/update_headtail_preprocess_job.sql',
+                cur=cur,
+                param_seq=[
+                    {
+                        'job_id': job_id,
+                        'checksum': cksum
+                    }
+                    for cksum in row['checksums']
+                ]
+            )
+        return n_images
+
+    def _get_laser_preprocess_frames(self,
+                                     job_document: Dict,
+                                     image_limit: int,
+                                     cur: psycopg.Cursor,
+                                     worker: str,
+                                     expiration: dt.timedelta,
+                                     origin: str
+                                     ) -> int:
+        do_query(
+            path='sql/select_next_images_for_laser_preprocessing.sql',
+            cur=cur,
+            params={
+                'limit': image_limit
+            }
+        )
+        results: List[Dict[str, Any]] = cur.fetchall()
+        n_images = 0
+        for row in results:
+            job_id = uuid.uuid4()
+            job_definitions = {
+                'jobId': job_id.hex,
+                'frameIds': row['checksums'],
+                'cameraId': row['camera_idx'],
+                'operation': 'preprocess',
+                'diveId': None
+            }
+            n_images += len(row['checksums'])
+            job_document['jobs'].append(job_definitions)
+            do_query(
+                path='sql/insert_job.sql',
+                cur=cur,
+                params={
+                    'job_id': job_id,
+                     'worker': worker,
+                    'job_type': 'preprocess',
+                    'expiration': dt.datetime.now() + expiration,
+                    'origin': origin
+                }
+            )
+            do_many_query(
+                path='sql/update_preprocess_job.sql',
+                cur=cur,
+                param_seq=[
+                    {
+                        'job_id': job_id,
+                        'checksum': cksum
+                    }
+                    for cksum in row['checksums']
+                ]
+            )
+        return n_images
+
     def get_next_job_dict(self,
                           worker: str,
                           origin: str,
@@ -132,46 +236,25 @@ class Orchestrator:
         job_document = {
             'jobs': []
         }
+        frame_count = 0
         with psycopg.connect(self.__pgconn, row_factory=dict_row) as con, con.cursor() as cur:
-            do_query(
-                path='sql/select_next_images_for_laser_preprocessing.sql',
-                cur=cur,
-                params={
-                    'limit': n_images
-                }
-            )
-            results: List[Dict[str, Any]] = cur.fetchall()
-            for row in results:
-                job_id = uuid.uuid4()
-                job_definitions = {
-                    'jobId': job_id.hex,
-                    'frameIds': row['checksums'],
-                    'cameraId': row['camera_idx'],
-                    'operation': 'preprocess',
-                    'diveId': None
-                }
-                job_document['jobs'].append(job_definitions)
-                do_query(
-                    path='sql/insert_job.sql',
+            if frame_count < n_images:
+                frame_count += self._get_headtail_preprocess_frames(
+                    job_document=job_document,
+                    image_limit=n_images - frame_count,
                     cur=cur,
-                    params={
-                        'job_id': job_id,
-                        'worker': worker,
-                        'job_type': 'preprocess',
-                        'expiration': dt.datetime.now() + dt.timedelta(seconds=expiration),
-                        'origin': origin
-                    }
+                    worker=worker,
+                    expiration=dt.timedelta(seconds=expiration),
+                    origin=origin
                 )
-                do_many_query(
-                    path='sql/update_preprocess_job.sql',
+            if frame_count < n_images:
+                frame_count += self._get_laser_preprocess_frames(
+                    job_document=job_document,
+                    image_limit=n_images - frame_count,
                     cur=cur,
-                    param_seq=[
-                        {
-                            'job_id': job_id,
-                            'checksum': cksum
-                        }
-                        for cksum in row['checksums']
-                    ]
+                    worker=worker,
+                    expiration=dt.timedelta(seconds=expiration),
+                    origin=origin
                 )
         return job_document
 
@@ -222,7 +305,8 @@ class Orchestrator:
                 )
                 job_type = cur.fetchone()['job_type']
                 query_map = {
-                    'preprocess': 'sql/cancel_preprocess_job.sql'
+                    'preprocess': 'sql/cancel_preprocess_job.sql',
+                    'preprocess_with_laser': 'sql/cancel_preprocess_laser_job.sql'
                 }
                 do_query(
                     path=query_map[job_type],

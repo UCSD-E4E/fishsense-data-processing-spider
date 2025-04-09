@@ -390,3 +390,84 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         self.write(blob)
         self.flush()
         self.finish()
+
+
+class LaserLabelHandler(AuthenticatedHandler):
+    """Laser Label Handler
+    """
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/data/laser_label'
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('LaserLabelHandler')
+        return super().initialize(key_store)
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File Checksum
+        """
+        self.authenticate(Permission.GET_RAW_FILE)
+        try:
+            document = self._data_model.get_laser_label(checksum)
+        except KeyError:
+            self._logger.warning('Invalid raw file checksum %s', checksum)
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+        if not document:
+            self._logger.info('No laser label for %s', checksum)
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+        self._logger.debug('Got %s', document)
+        self.finish(document)
+
+
+class PreprocessLaserJpegHandler(AuthenticatedHandler):
+    """Preprocess Laser Jpeg handler
+    """
+    SUPPORTED_METHODS = ('PUT', 'OPTIONS', 'GET')
+    PATH_OVERRIDE = '/api/v1/data/laser_jpeg'
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('PreprocessLaserJpegHandler')
+        return super().initialize(key_store)
+
+    async def put(self, checksum: str) -> None:
+        """Put Method Handler
+
+        Args:
+            checksum (str): Raw File Checksum
+
+        Raises:
+            HTTPError: Not Found
+        """
+        self.authenticate(Permission.PUT_LASER_FRAME)
+        try:
+            self._data_model.verify_raw_checksum(checksum)
+        except KeyError:
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+
+        self._data_model.put_preprocess_laser_jpeg(
+            checksum=checksum,
+            data=self.request.body
+        )
+        self.set_status(HTTPStatus.OK)
+        self.finish()
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File checksum
+        """
+        blob = self._data_model.get_preprocess_laser_jpeg(checksum)
+        self._logger.debug('Retrieved %d bytes', len(blob))
+        self.set_header('Content-Type', 'image/jpeg')
+        self.set_header(
+            'Cache-Control',
+            'max-age=3600, must-revalidate, no-transform, immutable'
+        )
+        self.write(blob)
+        self.flush()
+        self.finish()

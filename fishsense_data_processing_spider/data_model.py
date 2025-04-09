@@ -2,7 +2,7 @@
 '''
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import psycopg
 from psycopg.rows import dict_row
@@ -17,6 +17,7 @@ class DataModel:
                  data_path_mapping: Dict[Path, Path],
                  pg_conn_str: str,
                  preprocess_jpeg_path: Path,
+                 preprocess_laser_jpeg_path: Path,
                  *,
                  max_raw_data_file_size: int = 20_000_000
                  ):
@@ -26,6 +27,7 @@ class DataModel:
         self._log.setLevel(logging.INFO)
         self._max_raw_data_size = max_raw_data_file_size
         self._preprocess_jpg_store = preprocess_jpeg_path
+        self._preprocess_laser_jpg_store = preprocess_laser_jpeg_path
 
     def get_lens_cal_bytes(self, camera_id: int) -> bytes:
         """Retrieves the lens calibration package
@@ -158,6 +160,29 @@ class DataModel:
             )
             con.commit()
 
+    def put_preprocess_laser_jpeg(self, checksum: str, data: bytes) -> None:
+        """Put Preprocessed Laser JPEG
+
+        Args:
+            checksum (str): Raw File checksum
+            data (bytes): File data
+        """
+        final_path = self._preprocess_laser_jpg_store / (checksum + '.JPG')
+        local_path = self.map_local_path(final_path)
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_path, 'wb') as handle:
+            handle.write(data)
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/update_preprocess_laser_jpeg_path.sql',
+                cur=cur,
+                params={
+                    'unc_path': final_path.as_posix(),
+                    'cksum': checksum
+                }
+            )
+            con.commit()
+
     def get_preprocess_jpeg(self, checksum: str) -> bytes:
         """Retrievs the preprocess jpeg data
 
@@ -178,3 +203,53 @@ class DataModel:
 
         with open(local_path, 'rb') as handle:
             return handle.read(self._max_raw_data_size)
+
+    def get_preprocess_laser_jpeg(self, checksum: str) -> bytes:
+        """Retrievs the preprocess laser jpeg data
+
+        Args:
+            checksum (str): Raw File checksum
+
+        Raises:
+            FileNotFoundError: File not found
+
+        Returns:
+            bytes: Binary contents of file
+        """
+        self.verify_raw_checksum(checksum=checksum)
+        final_path = self._preprocess_laser_jpg_store / (checksum + '.JPG')
+        local_path = self.map_local_path(final_path)
+        if not local_path.is_file():
+            raise FileNotFoundError(f'{local_path} not found!')
+
+        with open(local_path, 'rb') as handle:
+            return handle.read(self._max_raw_data_size)
+
+    def get_laser_label(self, checksum: str) -> Optional[Dict[str, int]]:
+        """Retrieves the laser label
+
+        Args:
+            checksum (str): Raw file checksum
+
+        Returns:
+            Optional[Dict[str, int]]: Laser Label dict if exists, otherwise None
+        Raises:
+            KeyError: Raw file does not exist
+        """
+        self.verify_raw_checksum(checksum=checksum)
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_laser_label_by_cksum.sql',
+                cur=cur,
+                params={
+                    'cksum': checksum
+                }
+            )
+            result = cur.fetchone()
+        if result is None:
+            return None
+        return {
+            'task_id': result['task_id'],
+            'x': result['x'],
+            'y': result['y']
+        }
