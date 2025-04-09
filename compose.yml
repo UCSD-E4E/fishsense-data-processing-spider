@@ -23,7 +23,6 @@ services:
       E4EFS_WEB_API__ROOT_URL: https://orchestrator.fishsense.e4e.ucsd.edu
     ports:
       - 9095:9090
-      - 8083:80
     secrets:
       - postgres_admin_password
     deploy:
