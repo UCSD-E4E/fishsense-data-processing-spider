@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.32.0 (2025-04-09)
+
+### Bug Fixes
+
+- Corrects file name
+  ([`2784d6b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2784d6b0716ee1f31493f452f5b56d83b8079414))
+
+- Fixes signal handler
+  ([`8298191`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/829819186c86c74aa68a377c75908faa76a62ada))
+
+### Features
+
+- Adds label studio head/tail sync
+  ([`6d8e519`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/6d8e5194b8207435b588d41c8fb3207295fe7986))
+
+
 ## v0.31.0 (2025-04-09)
 
 ### Bug Fixes
