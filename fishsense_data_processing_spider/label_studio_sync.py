@@ -198,7 +198,7 @@ class LabelStudioSync:
         )
         with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
             do_query(
-                path='sql/select_preprocesed_laser_images_for_labeling.sql',
+                path='sql/select_preprocessed_laser_images_for_labeling.sql',
                 cur=cur,
                 params={
                     'priority': priority
