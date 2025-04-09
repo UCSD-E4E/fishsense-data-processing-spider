@@ -191,6 +191,42 @@ class LabelStudioSync:
         get_gauge('last_label_studio_sync').labels(
             project=10).set_to_current_time()
 
+    def _import_headtail_tasks(self, priority: str, project_id: int):
+        client = LabelStudio(
+            base_url=f'https://{self._label_studio_host}',
+            api_key=self._label_studio_key
+        )
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_preprocessed_laser_images_for_labeling.sql',
+                cur=cur,
+                params={
+                    'priority': priority
+                }
+            )
+            image_checksums = [row['cksum'] for row in cur.fetchall()]
+            urls = {
+                cksum: f'{self._root_url}/api/v1/data/laser_jpeg/{cksum}'
+                for cksum in image_checksums
+            }
+
+            for cksum, url in urls.items():
+                new_task = client.tasks.create(
+                    data={
+                        'img': url
+                    },
+                    project=project_id
+                )
+                task_id = new_task.id
+                do_query(
+                    path='sql/insert_headtaillabels.sql',
+                    cur=cur,
+                    params={
+                        'cksum': cksum,
+                        'task_id': task_id
+                    }
+                )
+
     def _import_laser_tasks(self, priority: str, project_id: int):
         client = LabelStudio(
             base_url=f'https://{self._label_studio_host}',
@@ -256,11 +292,24 @@ class LabelStudioSync:
             try:
                 self._import_laser_tasks(priority='HIGH', project_id=42)
             except Exception as exc:
-                self.__log.exception('Importing tasks to 42 failed! %s', exc)
+                self.__log.exception(
+                    'Importing laser tasks to 42 failed! %s', exc)
             try:
                 self._import_laser_tasks(priority='LOW', project_id=43)
             except Exception as exc:
-                self.__log.exception('Importing tasks to 43 failed! %s', exc)
+                self.__log.exception(
+                    'Importing laser tasks to 43 failed! %s', exc)
+
+            try:
+                self._import_headtail_tasks(priority='HIGH', project_id=44)
+            except Exception as exc:
+                self.__log.exception(
+                    'Importing headtail tasks to 44 failed! %s', exc)
+            try:
+                self._import_headtail_tasks(priority='LOW', project_id=45)
+            except Exception as exc:
+                self.__log.exception(
+                    'Importing headtail tasks to 45 failed! %s', exc)
 
             self.__log.info('Projects synced')
             self.sleep_interrupt.clear()
