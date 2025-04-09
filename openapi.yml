@@ -14,7 +14,8 @@ externalDocs:
   description: Find out more about the Fishsense Data Processing Orchestrator
   url: https://github.com/UCSD-E4E/fishsense-data-processing-spider
 servers:
-  - url: http://fabricant.ucsd.edu:8083
+  - url: https://orchestrator.fishsense.e4e.ucsd.edu
+    description: Production server
 tags:
   - name: job
     description: Job management
