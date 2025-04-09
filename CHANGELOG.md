@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v0.31.0 (2025-04-09)
+
+### Bug Fixes
+
+- Removes exposed port
+  ([`4c37510`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/4c375105df450bf9d92bfe1d287686951547b058))
+
+### Documentation
+
+- Updates URLs
+  ([`9bf6edc`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9bf6edc8fbf7245eae075509d3b86cda709d5b97))
+
+### Features
+
+- Adds preprocess_with_laser
+  ([`80ba910`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/80ba9108b3b0e16a3d397028934ddaafa9f07f28))
+
+
 ## v0.30.0 (2025-04-08)
 
 ### Features
