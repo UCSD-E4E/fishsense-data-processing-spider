@@ -118,13 +118,15 @@ class Orchestrator:
                                         cur: psycopg.Cursor,
                                         worker: str,
                                         expiration: dt.timedelta,
-                                        origin: str
+                                        origin: str,
+                                        priority: str
                                         ) -> int:
         do_query(
             path='sql/select_next_images_for_headtail_preprocessing.sql',
             cur=cur,
             params={
-                'limit': image_limit
+                'limit': image_limit,
+                'priority': priority
             }
         )
         results: List[Dict[str, Any]] = cur.fetchall()
@@ -170,13 +172,15 @@ class Orchestrator:
                                      cur: psycopg.Cursor,
                                      worker: str,
                                      expiration: dt.timedelta,
-                                     origin: str
+                                     origin: str,
+                                     priority: str
                                      ) -> int:
         do_query(
             path='sql/select_next_images_for_laser_preprocessing.sql',
             cur=cur,
             params={
-                'limit': image_limit
+                'limit': image_limit,
+                'priority': priority
             }
         )
         results: List[Dict[str, Any]] = cur.fetchall()
@@ -245,7 +249,8 @@ class Orchestrator:
                     cur=cur,
                     worker=worker,
                     expiration=dt.timedelta(seconds=expiration),
-                    origin=origin
+                    origin=origin,
+                    priority='HIGH'
                 )
             if frame_count < n_images:
                 frame_count += self._get_laser_preprocess_frames(
@@ -254,7 +259,28 @@ class Orchestrator:
                     cur=cur,
                     worker=worker,
                     expiration=dt.timedelta(seconds=expiration),
-                    origin=origin
+                    origin=origin,
+                    priority='HIGH'
+                )
+            if frame_count < n_images:
+                frame_count += self._get_headtail_preprocess_frames(
+                    job_document=job_document,
+                    image_limit=n_images - frame_count,
+                    cur=cur,
+                    worker=worker,
+                    expiration=dt.timedelta(seconds=expiration),
+                    origin=origin,
+                    priority='LOW'
+                )
+            if frame_count < n_images:
+                frame_count += self._get_laser_preprocess_frames(
+                    job_document=job_document,
+                    image_limit=n_images - frame_count,
+                    cur=cur,
+                    worker=worker,
+                    expiration=dt.timedelta(seconds=expiration),
+                    origin=origin,
+                    priority='LOW'
                 )
         return job_document
 

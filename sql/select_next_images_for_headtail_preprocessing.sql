@@ -9,7 +9,8 @@ FROM (
   LEFT JOIN cameras ON images.camera_sn = cameras.serial_number
   WHERE laser_labels.complete = TRUE AND
     headtail_labels.task_id IS NULL AND
-    images.preprocess_laser_job_id IS NULL
+    images.preprocess_laser_job_id IS NULL AND
+    canonical_dives.priority = %(priority)s
   ORDER BY priorities.idx, camera_idx
   LIMIT %(limit)s
 )
