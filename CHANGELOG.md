@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.33.0 (2025-04-10)
+
+### Features
+
+- Adds priority to job select
+  ([`f93b64d`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f93b64d6c445933bd03e16885b5e591122c2266a))
+
+
 ## v0.32.0 (2025-04-09)
 
 ### Bug Fixes
