@@ -75,7 +75,7 @@ class Service:
         )
 
         self.stop_event = asyncio.Event()
-        signal.signal(signal.SIGTERM, lambda x, y: self.stop_event.set)
+        signal.signal(signal.SIGTERM, lambda x, y: self.stop_event.set())
         start_time = dt.datetime.now(tz=pytz.UTC)
 
         self.__summary_thread = Thread(
