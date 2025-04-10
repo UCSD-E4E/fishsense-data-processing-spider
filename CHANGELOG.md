@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.33.1 (2025-04-10)
+
+### Bug Fixes
+
+- Fixes signal handler
+  ([`9eea841`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9eea84116daee304deab5454b1f63a2dffc972ba))
+
+
 ## v0.33.0 (2025-04-10)
 
 ### Features
