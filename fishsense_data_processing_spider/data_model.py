@@ -1,6 +1,7 @@
 '''Data Model
 '''
 import logging
+import uuid
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -18,6 +19,7 @@ class DataModel:
                  pg_conn_str: str,
                  preprocess_jpeg_path: Path,
                  preprocess_laser_jpeg_path: Path,
+                 debug_data_path: Path,
                  *,
                  max_raw_data_file_size: int = 20_000_000
                  ):
@@ -28,6 +30,7 @@ class DataModel:
         self._max_raw_data_size = max_raw_data_file_size
         self._preprocess_jpg_store = preprocess_jpeg_path
         self._preprocess_laser_jpg_store = preprocess_laser_jpeg_path
+        self._debug_data_path = debug_data_path
 
     def get_lens_cal_bytes(self, camera_id: int) -> bytes:
         """Retrieves the lens calibration package
@@ -253,3 +256,20 @@ class DataModel:
             'x': result['x'],
             'y': result['y']
         }
+
+    def put_debug_data(self, job_id: uuid.UUID, data: bytes) -> None:
+        """Put Debug Data
+        
+        This method stores the debug data for a given job ID. The data is saved in a zip file format
+        with the job ID as the filename in the specified debug data path.
+        
+        Args:
+            job_id (uuid.UUID): Job ID
+            data (bytes): File data
+        """
+        self._log.debug('put_debug_data %s', job_id)
+        final_path = self._debug_data_path / (str(job_id) + '.zip')
+        local_path = self.map_local_path(final_path)
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_path, 'wb') as handle:
+            handle.write(data)

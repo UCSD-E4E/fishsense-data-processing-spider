@@ -8,7 +8,7 @@ import logging
 import secrets
 import sqlite3
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class Permission(enum.Enum):
@@ -21,7 +21,8 @@ class Permission(enum.Enum):
     GET_LASER_LABEL = 'getLaserLabel'
     GET_LASER_FRAME = 'getLaserFrame'
     PUT_LASER_FRAME = 'putLaserFrame'
-
+    PUT_DEBUG_BLOB = 'putDebugBlob'
+    ADMIN = 'admin'
 class KeyStore:
     """API Key Store
     """
@@ -108,6 +109,14 @@ class KeyStore:
                     'ALTER TABLE keys ADD COLUMN putLaserFrame INTEGER DEFAULT FALSE;'
                 )
                 cur.execute('UPDATE version SET version=7;')
+            if version < 8:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN putDebugBlob INTEGER DEFAULT FALSE;'
+                )
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN admin INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=8;')
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'
@@ -179,6 +188,31 @@ class KeyStore:
                 }
             )
             con.commit()
+
+    def get_perm(self, key: str) -> List[Permission]:
+        """Gets the list of permissions associated with this key
+
+        Args:
+            key (str): Key to check
+
+        Returns:
+            List[Permission]: List of allowed Permissions
+        """
+        key_hash = self.__hash_key(key)
+        allowed_perms: List[Permission] = []
+        with contextlib.closing(sqlite3.connect(self.__path)) as con, \
+                contextlib.closing(con.cursor()) as cur:
+            for perm in Permission:
+                cur.execute(
+                    f'SELECT {perm.value} FROM keys WHERE hash = :hash;',
+                    {
+                        'hash': key_hash
+                    }
+                )
+                result = cur.fetchone()
+                if result[0] == 1:
+                    allowed_perms.append(perm)
+        return allowed_perms
 
     def __hash_key(self, key: str) -> str:
         return hashlib.pbkdf2_hmac('sha256',

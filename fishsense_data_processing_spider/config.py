@@ -155,6 +155,10 @@ validators = [
         cast=Path
     ),
     Validator(
+        'data_model.debug_data_store',
+        cast=Path
+    ),
+    Validator(
         'web_api.root_url',
         cast=str,
         required=True

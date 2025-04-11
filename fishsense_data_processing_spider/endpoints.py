@@ -471,3 +471,31 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.write(blob)
         self.flush()
         self.finish()
+
+
+class DebugDataHandler(AuthenticatedJobHandler):
+    """Debug Data Handler
+    """
+    SUPPORTED_METHODS = ('PUT', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/debug'
+
+    def initialize(self, key_store, orchestrator: Orchestrator, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('DebugDataHandler')
+        return super().initialize(key_store, orchestrator)
+
+    async def put(self, job_id: str) -> None:
+        self.authenticate(Permission.PUT_DEBUG_BLOB)
+        try:
+            job_id = uuid.UUID(job_id)
+        except ValueError:
+            raise HTTPError(HTTPStatus.BAD_REQUEST, 'Invalid job id')
+        if not self._orchestrator.is_valid_job(job_id):
+            raise HTTPError(HTTPStatus.NOT_FOUND, 'Job not found')
+        self._data_model.put_debug_data(
+            job_id=job_id,
+            data=self.request.body
+        )
+        self.set_status(HTTPStatus.OK)
+        self.finish()
+        self._logger.debug('Stored %d bytes', len(self.request.body))

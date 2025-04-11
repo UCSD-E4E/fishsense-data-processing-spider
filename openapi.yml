@@ -31,7 +31,43 @@ tags:
     description: API v1
   - name: control
     description: Spider control
+  - name: debug
+    description: Debugging endpoints
 paths:
+  /api/v1/debug/{job_id}:
+    put:
+      tags:
+        - debug
+        - v1
+      summary: Debugging endpoint to submit debugging data
+      operationId: putDebugBlob
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          description: Job ID to debug
+          schema:
+            type: string
+            example: 517c4ae7-cd6d-4ea7-a180-a6f81c4ea52f
+      requestBody:
+        required: true
+        description: Debugging data to submit
+        content:
+          application/zip:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+      security:
+        - api_key: []
+      
+            
   /api/v1/data/raw/{checksum}:
     get:
       tags:

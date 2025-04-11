@@ -292,6 +292,21 @@ class Orchestrator:
         """
         raise NotImplementedError
 
+    def is_valid_job(self, job_id: uuid.UUID) -> bool:
+        with psycopg.connect(self.__pgconn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_job_type.sql',
+                cur=cur,
+                params={
+                    'job_id': job_id
+                }
+            )
+            result = cur.fetchone()
+            if result is None:
+                return False
+            else:
+                return True
+
     def set_job_status(self, job_id: uuid.UUID, status: JobStatus, progress: Optional[int] = None):
         """Updates job status
 

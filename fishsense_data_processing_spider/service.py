@@ -24,10 +24,10 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
 from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
-    DoDiscoveryHandler, DoLabelStudioSyncHandler, HomePageHandler,
-    JobStatusHandler, LaserLabelHandler, LensCalHandler, NotImplementedHandler,
-    PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
-    RetrieveBatch, VersionHandler)
+    DebugDataHandler, DoDiscoveryHandler, DoLabelStudioSyncHandler,
+    HomePageHandler, JobStatusHandler, LaserLabelHandler, LensCalHandler,
+    NotImplementedHandler, PreprocessJpegHandler, PreprocessLaserJpegHandler,
+    RawDataHandler, RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -66,6 +66,7 @@ class Service:
             max_raw_data_file_size=settings.data_model.max_load_size,
             preprocess_jpeg_path=settings.data_model.preprocess_jpg_store,
             preprocess_laser_jpeg_path=settings.data_model.preprocess_laser_jpg_store,
+            debug_data_path=settings.data_model.debug_data_store
         )
 
         self.__crawler = Crawler(
@@ -132,7 +133,7 @@ class Service:
                 }
             ),
             URLSpec(
-                pattern=r'/api/v1/data/raw/(?P<checksum>.+)$',
+                pattern=r'/api/v1/data/raw/(?P<checksum>[a-z0-9]+)$',
                 handler=RawDataHandler,
                 kwargs={
                     'key_store': self.__keystore,
@@ -144,7 +145,7 @@ class Service:
                 handler=NotImplementedHandler
             ),
             URLSpec(
-                pattern=r'/api/v1/data/preprocess_jpeg/(.+)$',
+                pattern=r'/api/v1/data/preprocess_jpeg/([a-z0-9]+)$',
                 handler=PreprocessJpegHandler,
                 kwargs={
                     'key_store': self.__keystore,
@@ -152,7 +153,7 @@ class Service:
                 }
             ),
             URLSpec(
-                pattern=r'/api/v1/data/laser_jpeg/(.+)$',
+                pattern=r'/api/v1/data/laser_jpeg/([a-z0-9]+)$',
                 handler=PreprocessLaserJpegHandler,
                 kwargs={
                     'key_store': self.__keystore,
@@ -160,7 +161,7 @@ class Service:
                 }
             ),
             URLSpec(
-                pattern=r'/api/v1/data/laser/(.+)$',
+                pattern=r'/api/v1/data/laser/([a-z0-9]+)$',
                 handler=LaserLabelHandler,
                 kwargs={
                     'key_store': self.__keystore,
@@ -168,15 +169,15 @@ class Service:
                 }
             ),
             URLSpec(
-                pattern=r'/api/v1/data/head_tail/(.+)$',
+                pattern=r'/api/v1/data/head_tail/([a-z0-9]+)$',
                 handler=NotImplementedHandler
             ),
             URLSpec(
-                pattern=r'/api/v1/data/depth_cal/(.+)$',
+                pattern=r'/api/v1/data/depth_cal/([a-z0-9]+)$',
                 handler=NotImplementedHandler
             ),
             URLSpec(
-                pattern=r'/api/v1/data/lens_cal/(?P<camera_id>.+)$',
+                pattern=r'/api/v1/data/lens_cal/(?P<camera_id>\d+)$',
                 handler=LensCalHandler,
                 kwargs={
                     'key_store': self.__keystore,
@@ -197,6 +198,15 @@ class Service:
                 kwargs={
                     'crawler': self.__crawler,
                     'label_studio': self.__label_studio
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/debug/(?P<job_id>[a-zA-Z0-9-]+)$',
+                handler=DebugDataHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'orchestrator': self.__job_orchestrator,
+                    'data_model': self._data_model
                 }
             )
         ]
