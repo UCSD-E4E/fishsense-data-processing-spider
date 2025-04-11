@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.34.0 (2025-04-11)
+
+### Features
+
+- Adds debug endpoint
+  ([`d5b8241`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/d5b8241b7ec4884d31069eb6c52b8eab8c571a09))
+
+
 ## v0.33.1 (2025-04-10)
 
 ### Bug Fixes
