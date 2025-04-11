@@ -10,7 +10,6 @@ from importlib.metadata import version
 from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
-
 from fishsense_data_processing_spider import __version__
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
@@ -499,3 +498,52 @@ class DebugDataHandler(AuthenticatedJobHandler):
         self.set_status(HTTPStatus.OK)
         self.finish()
         self._logger.debug('Stored %d bytes', len(self.request.body))
+
+
+class ApiKeyAdminHandler(AuthenticatedHandler):
+    """API Key Admin Handler
+    """
+    SUPPORTED_METHODS = ('PUT', 'DELETE', 'GET', 'OPTIONS')
+
+    def initialize(self, key_store: KeyStore):
+        self._key_store = key_store
+        return super().initialize(key_store)
+
+    async def put(self, *_, **__) -> None:
+        self._modify_perms(True)
+
+    def _modify_perms(self, value: bool) -> None:
+        self.authenticate(Permission.ADMIN)
+        key = self.get_query_argument('key')
+        body = json.loads(self.request.body.decode('utf-8'))
+        if 'scopes' not in body:
+            raise HTTPError(HTTPStatus.BAD_REQUEST, 'Scopes not provided')
+        if not isinstance(body['scopes'], list):
+            raise HTTPError(HTTPStatus.BAD_REQUEST, 'Scopes not a list')
+        if not all(isinstance(x, str) for x in body['scopes']):
+            raise HTTPError(HTTPStatus.BAD_REQUEST,
+                            'Scopes not a list of strings')
+        if not all(x in Permission for x in body['scopes']):
+            raise HTTPError(HTTPStatus.BAD_REQUEST,
+                            'Scopes not valid permissions')
+        for scope in body['scopes']:
+            self._key_store.set_perm(key, Permission(scope), value)
+        self.set_status(HTTPStatus.OK)
+        self.finish()
+
+    async def delete(self, *_, **__) -> None:
+        self._modify_perms(False)
+
+    async def get(self, *_, **__) -> None:
+        self.authenticate()
+        key = self.get_query_argument(
+            'key', default=self.request.headers.get('api_key'))
+        perms = self._key_store.get_perm(key)
+        self.set_status(HTTPStatus.OK)
+        self.set_header('Content-Type', 'application/json')
+        self.write({
+            'scopes': [
+                perm.value for perm in perms
+            ]
+        })
+        self.finish()

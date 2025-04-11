@@ -24,10 +24,11 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
 from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
-    DebugDataHandler, DoDiscoveryHandler, DoLabelStudioSyncHandler,
-    HomePageHandler, JobStatusHandler, LaserLabelHandler, LensCalHandler,
-    NotImplementedHandler, PreprocessJpegHandler, PreprocessLaserJpegHandler,
-    RawDataHandler, RetrieveBatch, VersionHandler)
+    ApiKeyAdminHandler, DebugDataHandler, DoDiscoveryHandler,
+    DoLabelStudioSyncHandler, HomePageHandler, JobStatusHandler,
+    LaserLabelHandler, LensCalHandler, NotImplementedHandler,
+    PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
+    RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -207,6 +208,13 @@ class Service:
                     'key_store': self.__keystore,
                     'orchestrator': self.__job_orchestrator,
                     'data_model': self._data_model
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/admin/scope$',
+                handler=ApiKeyAdminHandler,
+                kwargs={
+                    'key_store': self.__keystore
                 }
             )
         ]

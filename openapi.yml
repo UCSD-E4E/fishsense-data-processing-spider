@@ -34,6 +34,140 @@ tags:
   - name: debug
     description: Debugging endpoints
 paths:
+  /api/v1/admin/scope:
+    delete:
+      tags:
+        - v1
+        - admin
+      summary: Deletes the current scopes of the api key
+      operationId: deleteScopes
+      parameters:
+        - name: key
+          in: query
+          required: true
+          description: API key to set scopes for
+          schema:
+            type: string
+            example: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+      requestBody:
+        required: true
+        description: Scopes to delete
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - doDiscovery
+                      - doLabelStudioSync
+                      - getRawFile
+                      - putPreprocessedFrame
+                      - getLaserLabel
+                      - putLaserFrame
+                      - putDebugBlob
+                      - admin
+                  example:
+                    - doDiscovery
+                    - doLabelStudioSync
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+    put:
+      tags:
+        - v1
+        - admin
+      summary: Sets the current scopes of the api key
+      operationId: setScopes
+      parameters:
+        - name: key
+          in: query
+          required: true
+          description: API key to set scopes for
+          schema:
+            type: string
+            example: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+      requestBody:
+        required: true
+        description: Scopes to set
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - doDiscovery
+                      - doLabelStudioSync
+                      - getRawFile
+                      - putPreprocessedFrame
+                      - getLaserLabel
+                      - putLaserFrame
+                      - putDebugBlob
+                      - admin
+                  example:
+                    - doDiscovery
+                    - doLabelStudioSync
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+    get:
+      tags:
+        - v1
+        - admin
+      summary: Retrieves the current scopes of the api key
+      operationId: getScopes
+      parameters:
+        - name: key
+          in: query
+          required: false
+          description: API key to get scopes for
+          schema:
+            type: string
+            example: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scopes:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - doDiscovery
+                        - doLabelStudioSync
+                        - getRawFile
+                        - putPreprocessedFrame
+                        - getLaserLabel
+                        - putLaserFrame
+                        - putDebugBlob
+                        - admin
+                    example:
+                      - doDiscovery
+                      - doLabelStudioSync
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+                    
   /api/v1/debug/{job_id}:
     put:
       tags:
