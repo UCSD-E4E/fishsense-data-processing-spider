@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.35.0 (2025-04-11)
+
+### Features
+
+- Adds admin endpoints
+  ([`f4fa722`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f4fa722f662b2d1ead70f5f8b0dd7ccb6182ed27))
+
+
 ## v0.34.0 (2025-04-11)
 
 ### Features
