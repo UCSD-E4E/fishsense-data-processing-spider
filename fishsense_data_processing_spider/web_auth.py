@@ -123,7 +123,7 @@ class KeyStore:
             )
             self.__salt, self.__iterations = cur.fetchone()
 
-    def get_new_key(self, comment: str, expires: Optional[dt.datetime] = None) -> str:
+    def get_new_key(self, comment: str, expires: Optional[dt.datetime] = None) -> Tuple[str, dt.datetime]:
         """Generates and stores a new API key
 
         Args:
@@ -131,7 +131,7 @@ class KeyStore:
             expires (Optional[dt.datetime]): Expiration.  Defaults to 400 days
 
         Returns:
-            str: New API Key
+            Tuple[str, dt.datetime]: New API Key, expiration timestamp
         """
         new_key = secrets.token_hex()
         new_hash = self.__hash_key(new_key)
@@ -148,7 +148,7 @@ class KeyStore:
                 }
             )
             con.commit()
-        return new_key
+        return new_key, expires
 
     def list_hashes(self) -> Dict[str, str]:
         """List hashes
