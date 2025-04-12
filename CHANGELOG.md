@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.36.0 (2025-04-12)
+
+### Bug Fixes
+
+- Fixes auth
+  ([`aa7535e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/aa7535e99c7212c0a37a22b1419710ce01fd6d03))
+
+### Features
+
+- Adds key generation endpoint
+  ([`195cffb`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/195cffbfe8410d3474fbf5892123c2a9f3c01f35))
+
+
 ## v0.35.0 (2025-04-11)
 
 ### Features
