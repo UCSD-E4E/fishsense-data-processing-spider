@@ -12,8 +12,10 @@ from fishsense_data_processing_spider.web_auth import Permission
 
 
 def _get_api_key(comment: str, expires: Optional[dt.datetime] = None):
-    new_key = rpyc.connect('localhost', 18861).root.get_api_key(comment, expires)
-    print(new_key)
+    new_key, expires = rpyc.connect(
+        'localhost', 18861).root.get_api_key(comment, expires)
+    print(f'Key: {new_key}')
+    print(f'Expires: {expires.isoformat()}')
 
 
 def _set_api_key_perms(key: str, permission: str, value: bool):

@@ -26,7 +26,7 @@ from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
     ApiKeyAdminHandler, DebugDataHandler, DoDiscoveryHandler,
     DoLabelStudioSyncHandler, HomePageHandler, JobStatusHandler,
-    LaserLabelHandler, LensCalHandler, NotImplementedHandler,
+    LaserLabelHandler, LensCalHandler, NewKeyHandler, NotImplementedHandler,
     PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
     RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
@@ -213,6 +213,13 @@ class Service:
             URLSpec(
                 pattern=r'/api/v1/admin/scope$',
                 handler=ApiKeyAdminHandler,
+                kwargs={
+                    'key_store': self.__keystore
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/admin/new_key$',
+                handler=NewKeyHandler,
                 kwargs={
                     'key_store': self.__keystore
                 }

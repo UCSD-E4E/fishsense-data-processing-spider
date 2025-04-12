@@ -547,3 +547,35 @@ class ApiKeyAdminHandler(AuthenticatedHandler):
             ]
         })
         self.finish()
+
+
+class NewKeyHandler(AuthenticatedHandler):
+    """New Key Handler
+    """
+    SUPPORTED_METHODS = ('POST', 'OPTIONS')
+
+    def initialize(self, key_store: KeyStore):
+        self._key_store = key_store
+        return super().initialize(key_store)
+
+    async def post(self, *_, **__) -> None:
+        """post method handler
+        """
+        self.authenticate(Permission.ADMIN)
+        comment = self.get_query_argument('comment')
+        expiration = dt.datetime.fromisoformat(
+            self.get_query_argument('expiration', default=None))
+        scopes = self.get_query_arguments('scopes')
+        key, expires = self._key_store.get_new_key(
+            comment=comment,
+            expires=expiration
+        )
+        for scope in scopes:
+            self._key_store.set_perm(key, Permission(scope), True)
+        self.set_status(HTTPStatus.OK)
+        self.set_header('Content-Type', 'application/json')
+        self.write({
+            'key': key,
+            'expires': expires.isoformat(),
+        })
+        self.finish()
