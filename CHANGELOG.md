@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.37.0 (2025-04-15)
+
+### Features
+
+- Removes old ls projects
+  ([`2bd9d3f`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/2bd9d3fb407722393a08be48ebbe887dbb14fce9))
+
+
 ## v0.36.0 (2025-04-12)
 
 ### Bug Fixes
