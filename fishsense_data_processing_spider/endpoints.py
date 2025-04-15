@@ -137,6 +137,22 @@ class AuthenticatedHandler(BaseHandler, ABC):
             raise HTTPError(HTTPStatus.UNAUTHORIZED, f'Key {api_key} failed')
 
 
+class AuthenticatedDataHandler(AuthenticatedHandler):
+    """Authenticated Data Handler
+    """
+
+    def initialize(self, key_store: KeyStore, data_model: DataModel):
+        """Initializes the handler
+
+        Args:
+            key_store (KeyStore): API Key Store
+            data_model (DataModel): Data Model
+        """
+        # pylint: disable=attribute-defined-outside-init
+        # This is the correct pattern for tornado
+        super().initialize(key_store=key_store)
+        self._data_model = data_model
+
 class AuthenticatedJobHandler(AuthenticatedHandler, ABC):
     """Authenticated Job Handler
     """
@@ -421,6 +437,29 @@ class LaserLabelHandler(AuthenticatedHandler):
         self.finish(document)
 
 
+class HeadTailLabelHandler(AuthenticatedHandler):
+    """Head Tail label handler
+    """
+    SUPPORTED_METHODS = ('DELETE', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/data/head_tail'
+
+    def initialize(self, key_store, data_model: DataModel):
+        self._data_model = data_model
+        self._logger = logging.getLogger('HeadTailLabelHandler')
+        return super().initialize(key_store)
+
+    async def delete(self, checksum: str) -> None:
+        """Delete method
+
+        Args:
+            checksum (str): Raw file checksum
+        """
+        self.authenticate(Permission.ADMIN)
+        self._data_model.delete_headtail_label(checksum)
+        self.set_status(HTTPStatus.OK)
+        self.finish()
+        self._logger.debug('Deleted %s', checksum)
+
 class PreprocessLaserJpegHandler(AuthenticatedHandler):
     """Preprocess Laser Jpeg handler
     """
@@ -590,3 +629,30 @@ class NewKeyHandler(AuthenticatedHandler):
             'expires': expires.isoformat(),
         })
         self.finish()
+
+
+class FrameMetadataHandler(AuthenticatedDataHandler):
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/metadata/frame'
+
+    def initialize(self, key_store, data_model):
+        self._logger = logging.getLogger('FrameMetadataHandler')
+        return super().initialize(key_store, data_model)
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Raw File Checksum
+        """
+        self.authenticate(Permission.GET_RAW_FILE)
+        try:
+            document = self._data_model.get_frame_metadata(checksum)
+        except KeyError:
+            self._logger.warning('Invalid raw file checksum %s', checksum)
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+        if not document:
+            self._logger.info('No frame metadata for %s', checksum)
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+
+        self.finish(json.dumps(document, default=str))

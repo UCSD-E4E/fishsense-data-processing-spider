@@ -25,10 +25,10 @@ from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
     ApiKeyAdminHandler, DebugDataHandler, DoDiscoveryHandler,
-    DoLabelStudioSyncHandler, HomePageHandler, JobStatusHandler,
-    LaserLabelHandler, LensCalHandler, NewKeyHandler, NotImplementedHandler,
-    PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
-    RetrieveBatch, VersionHandler)
+    DoLabelStudioSyncHandler, FrameMetadataHandler, HeadTailLabelHandler,
+    HomePageHandler, JobStatusHandler, LaserLabelHandler, LensCalHandler,
+    NewKeyHandler, NotImplementedHandler, PreprocessJpegHandler,
+    PreprocessLaserJpegHandler, RawDataHandler, RetrieveBatch, VersionHandler)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
 from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
                                                       get_gauge, get_summary,
@@ -171,7 +171,11 @@ class Service:
             ),
             URLSpec(
                 pattern=r'/api/v1/data/head_tail/([a-z0-9]+)$',
-                handler=NotImplementedHandler
+                handler=HeadTailLabelHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
             ),
             URLSpec(
                 pattern=r'/api/v1/data/depth_cal/([a-z0-9]+)$',
@@ -222,6 +226,14 @@ class Service:
                 handler=NewKeyHandler,
                 kwargs={
                     'key_store': self.__keystore
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/metadata/frame/(?P<checksum>[a-z0-9]+)$',
+                handler=FrameMetadataHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
                 }
             )
         ]

@@ -33,6 +33,8 @@ tags:
     description: Spider control
   - name: debug
     description: Debugging endpoints
+  - name: metadata
+    description: Metadata access
 paths:
   /api/v1/admin/new_key:
     post:
@@ -767,6 +769,28 @@ paths:
           description: Success
         '401':
           $ref: '#/components/responses/401Unauthorized'
+  /api/v1/metadata/frame/{checksum}:
+    get:
+      tags:
+        - v1
+        - metadata
+      summary: Retrieves metadata for the RAW file represented by the checksum
+      operationId: getFrameMetadata
+      parameters:
+        - $ref: '#/components/parameters/RawChecksum'
+      responses:
+        '200':
+          description: Metadata for the RAW file
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+      security:
+        - api_key: []
       
 components:
   responses:

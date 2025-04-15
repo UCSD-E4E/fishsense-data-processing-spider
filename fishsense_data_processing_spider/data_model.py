@@ -3,7 +3,7 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import psycopg
 from psycopg.rows import dict_row
@@ -289,3 +289,28 @@ class DataModel:
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, 'wb') as handle:
             handle.write(data)
+
+    def delete_headtail_label(self, checksum: str) -> None:
+        self.verify_raw_checksum(checksum=checksum)
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/delete_headtail_label_by_cksum.sql',
+                cur=cur,
+                params={
+                    'cksum': checksum
+                }
+            )
+            con.commit()
+
+    def get_frame_metadata(self, checksum: str) -> Dict[str, Any]:
+        self.verify_raw_checksum(checksum=checksum)
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_frame_metadata_by_cksum.sql',
+                cur=cur,
+                params={
+                    'cksum': checksum
+                }
+            )
+            result = cur.fetchone()
+        return dict(result)
