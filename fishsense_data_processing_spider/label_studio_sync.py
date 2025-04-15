@@ -270,24 +270,24 @@ class LabelStudioSync:
 
             self.__log.info('Syncing projects')
             self.__bad_task_links_path.unlink(missing_ok=True)
-            try:
-                self.__sync_project_10()
-            except Exception as exc: # pylint: disable=broad-except
-                self.__log.exception('Syncing project 10 failed! %s', exc)
-            if self.stop_event.is_set():
-                break
-            for laser_project_id in [39, 40]:
-                try:
-                    self.__sync_laser_checksum_project(laser_project_id)
-                except Exception as exc:  # pylint: disable=broad-except
-                    self.__log.exception(
-                        'Syncing project %d failed! %s', laser_project_id, exc)
-                if self.stop_event.is_set():
-                    break
-            try:
-                self.__headtail_sync()
-            except Exception as exc: # pylint: disable=broad-except
-                self.__log.exception('Syncing project 19 failed! %s', exc)
+            # try:
+            #     self.__sync_project_10()
+            # except Exception as exc: # pylint: disable=broad-except
+            #     self.__log.exception('Syncing project 10 failed! %s', exc)
+            # if self.stop_event.is_set():
+            #     break
+            # for laser_project_id in [39, 40]:
+            #     try:
+            #         self.__sync_laser_checksum_project(laser_project_id)
+            #     except Exception as exc:  # pylint: disable=broad-except
+            #         self.__log.exception(
+            #             'Syncing project %d failed! %s', laser_project_id, exc)
+            #     if self.stop_event.is_set():
+            #         break
+            # try:
+            #     self.__headtail_sync()
+            # except Exception as exc: # pylint: disable=broad-except
+            #     self.__log.exception('Syncing project 19 failed! %s', exc)
 
             try:
                 self._import_laser_tasks(priority='HIGH', project_id=42)
