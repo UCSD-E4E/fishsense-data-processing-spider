@@ -424,7 +424,7 @@ class LaserLabelHandler(AuthenticatedHandler):
 class PreprocessLaserJpegHandler(AuthenticatedHandler):
     """Preprocess Laser Jpeg handler
     """
-    SUPPORTED_METHODS = ('PUT', 'OPTIONS', 'GET')
+    SUPPORTED_METHODS = ('PUT', 'OPTIONS', 'GET', 'DELETE')
     PATH_OVERRIDE = '/api/v1/data/laser_jpeg'
 
     def initialize(self, key_store, data_model: DataModel):
@@ -471,6 +471,17 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.flush()
         self.finish()
 
+    async def delete(self, checksum: str) -> None:
+        self.authenticate(Permission.ADMIN)
+        try:
+            self._data_model.verify_raw_checksum(checksum)
+        except KeyError:
+            raise HTTPError(HTTPStatus.NOT_FOUND)
+
+        self._data_model.delete_preprocess_laser_jpeg(checksum)
+        self.set_status(HTTPStatus.OK)
+        self.finish()
+        self._logger.debug('Deleted %s', checksum)
 
 class DebugDataHandler(AuthenticatedJobHandler):
     """Debug Data Handler

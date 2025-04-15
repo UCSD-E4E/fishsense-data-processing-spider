@@ -228,6 +228,22 @@ class DataModel:
         with open(local_path, 'rb') as handle:
             return handle.read(self._max_raw_data_size)
 
+    def delete_preprocess_laser_jpeg(self, checksum: str) -> None:
+        self.verify_raw_checksum(checksum=checksum)
+        final_path = self._preprocess_laser_jpg_store / (checksum + '.JPG')
+        local_path = self.map_local_path(final_path)
+        if local_path.is_file():
+            local_path.unlink()
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/delete_preprocess_laser_jpeg_path.sql',
+                cur=cur,
+                params={
+                    'cksum': checksum
+                }
+            )
+            con.commit()
+
     def get_laser_label(self, checksum: str) -> Optional[Dict[str, int]]:
         """Retrieves the laser label
 
