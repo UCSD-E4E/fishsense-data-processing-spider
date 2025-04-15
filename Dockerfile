@@ -25,11 +25,11 @@ COPY pyproject.toml poetry.lock /app/
 
 # Install the dependencies and clear the cache afterwards.
 #   This may save some MBs.
-RUN poetry install --no-root --without dev && rm -rf $POETRY_CACHE_DIR
+RUN poetry install --no-root --without dev --compile && rm -rf $POETRY_CACHE_DIR
 
 COPY README.md /app/README.md
 COPY ${PYTHON_PACKAGE} /app/${PYTHON_PACKAGE}
-RUN poetry install --only main
+RUN poetry install --only main --compile
 
 # Now let's build the runtime image from the builder.
 #   We'll just copy the env and the PATH reference.
