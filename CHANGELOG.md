@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v0.38.0 (2025-04-15)
+
+### Bug Fixes
+
+- Adds --compile flag
+  ([`695f456`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/695f4567bd81a2d15f6f1be6abeb90d19c876d7f))
+
+- Fixes select next image logic
+  ([`473e321`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/473e3219c61888924ce04e017b197ad21763f942))
+
+### Features
+
+- Adds delete preprocess with laser image
+  ([`27d4b08`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/27d4b08b3c0db23e89847b8ecd170537010a2652))
+
+- Adds metadata, delete head/tail label
+  ([`c8d3891`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c8d3891224a1ed6b4508f32f6ea62c50ceee8504))
+
+
 ## v0.37.0 (2025-04-15)
 
 ### Features
