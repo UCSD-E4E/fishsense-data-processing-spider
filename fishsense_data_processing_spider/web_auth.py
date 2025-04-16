@@ -23,6 +23,7 @@ class Permission(enum.Enum):
     PUT_LASER_FRAME = 'putLaserFrame'
     PUT_DEBUG_BLOB = 'putDebugBlob'
     ADMIN = 'admin'
+    GET_METADATA = 'getMetadata'
 class KeyStore:
     """API Key Store
     """
@@ -117,6 +118,11 @@ class KeyStore:
                     'ALTER TABLE keys ADD COLUMN admin INTEGER DEFAULT FALSE;'
                 )
                 cur.execute('UPDATE version SET version=8;')
+            if version < 9:
+                cur.execute(
+                    'ALTER TABLE keys ADD COLUMN getMetadata INTEGER DEFAULT FALSE;'
+                )
+                cur.execute('UPDATE version SET version=9;')
             con.commit()
             cur.execute(
                 'SELECT salt, iterations FROM params WHERE idx = 0;'

@@ -791,7 +791,29 @@ paths:
           $ref: '#/components/responses/401Unauthorized'
       security:
         - api_key: []
-      
+  /api/v1/metadata/dive/{checksum}:
+    get:
+      tags:
+        - v1
+        - metadata
+      summary: Retrieves metadata for the dive represented by the checksum
+      operationId: getDiveMetadata
+      parameters:
+        - $ref: '#/components/parameters/DiveChecksum'
+      responses:
+        '200':
+          description: Dive metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  frames:
+                    type: array
+                    description: List of frame IDs
+                    items:
+                      type: string
+
 components:
   responses:
     404NotFound:

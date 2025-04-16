@@ -314,3 +314,25 @@ class DataModel:
             )
             result = cur.fetchone()
         return dict(result)
+
+    def get_dive_metadata(self, checksum: str) -> Dict[str, Any]:
+        """Gets the dive metadata
+
+        Args:
+            checksum (str): Dive checksum
+
+        Returns:
+            Dict[str, Any]: Dictionary of dive data
+        """
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_dive_frame_checksum_by_dive_checksum.sql',
+                cur=cur,
+                params={
+                    'cksum': checksum
+                }
+            )
+            frame_ids = [row['frames'] for row in cur.fetchall()]
+        return {
+            'frames': frame_ids
+        }

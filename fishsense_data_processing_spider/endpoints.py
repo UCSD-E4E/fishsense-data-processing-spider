@@ -645,7 +645,7 @@ class FrameMetadataHandler(AuthenticatedDataHandler):
         Args:
             checksum (str): Raw File Checksum
         """
-        self.authenticate(Permission.GET_RAW_FILE)
+        self.authenticate(Permission.GET_METADATA)
         try:
             document = self._data_model.get_frame_metadata(checksum)
         except KeyError:
@@ -656,3 +656,22 @@ class FrameMetadataHandler(AuthenticatedDataHandler):
             raise HTTPError(HTTPStatus.NOT_FOUND)
 
         self.finish(json.dumps(document, default=str))
+
+
+class DiveMetadataHandler(AuthenticatedDataHandler):
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+    PATH_OVERRIDE = '/api/v1/metadata/dive'
+
+    def initialize(self, key_store, data_model):
+        self._logger = logging.getLogger('DiveMetadataHandler')
+        return super().initialize(key_store, data_model)
+
+    async def get(self, checksum: str) -> None:
+        """Get method implementation
+
+        Args:
+            checksum (str): Dive checksum
+        """
+        self.authenticate(Permission.GET_METADATA)
+        document = self._data_model.get_dive_metadata(checksum)
+        self.finish(document)
