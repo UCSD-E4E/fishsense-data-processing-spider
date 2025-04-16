@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.39.0 (2025-04-16)
+
+### Features
+
+- Adds getDiveMetadata
+  ([`5601b05`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/5601b05a8c48ea37236ea9685304f93c53f50a8e))
+
+
 ## v0.38.0 (2025-04-15)
 
 ### Bug Fixes
