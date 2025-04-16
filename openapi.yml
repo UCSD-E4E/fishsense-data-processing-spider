@@ -134,6 +134,7 @@ paths:
                       - putLaserFrame
                       - putDebugBlob
                       - admin
+                      - getMetadata
                   example:
                     - doDiscovery
                     - doLabelStudioSync
@@ -800,6 +801,8 @@ paths:
       operationId: getDiveMetadata
       parameters:
         - $ref: '#/components/parameters/DiveChecksum'
+      security:
+        - api_key: []
       responses:
         '200':
           description: Dive metadata
