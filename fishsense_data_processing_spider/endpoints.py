@@ -324,7 +324,7 @@ class RawDataHandler(AuthenticatedDataHandler):
         try:
             blob = self._data_model.get_raw_file_bytes(checksum)
         except KeyError as exc:
-            raise HTTPError(HTTPStatus.NOT_FOUND, exc)
+            raise HTTPError(HTTPStatus.NOT_FOUND, 'Invalid checksum')
         self._logger.debug('Retrieved %d bytes', len(blob))
         self.set_header('Content-Type', 'application/octet-stream')
         self.write(blob)
