@@ -198,18 +198,11 @@ def configure_logging():
         when='midnight',
         backupCount=5
     )
-    log_file_handler.setLevel(logging.DEBUG)
-
-    msg_fmt = '%(asctime)s.%(msecs)03dZ - %(name)s - %(levelname)s - %(message)s'
-    root_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
-    log_file_handler.setFormatter(root_formatter)
+    configure_log_handler(log_file_handler)
     root_logger.addHandler(log_file_handler)
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-
-    error_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
-    console_handler.setFormatter(error_formatter)
+    configure_log_handler(console_handler)
     root_logger.addHandler(console_handler)
     logging.Formatter.converter = time.gmtime
 
