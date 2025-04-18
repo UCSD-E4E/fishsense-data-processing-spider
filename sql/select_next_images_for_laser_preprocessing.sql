@@ -7,6 +7,7 @@ FROM (
   LEFT JOIN laser_labels ON images.image_md5 = laser_labels.cksum
   LEFT JOIN cameras ON images.camera_sn = cameras.serial_number
   WHERE images.preprocess_jpeg_path IS NULL AND
+    images.ignore = FALSE AND
     canonical_dives.priority = %(priority)s
   ORDER BY priorities.idx, camera_idx
   LIMIT %(limit)s

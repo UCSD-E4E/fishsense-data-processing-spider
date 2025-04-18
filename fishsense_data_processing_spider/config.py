@@ -1,18 +1,18 @@
 '''Config
 '''
-
 import datetime as dt
 import logging
 import logging.handlers
 import os
 import time
+from importlib.metadata import version
 from pathlib import Path
 from typing import Dict
 
 import platformdirs
 import validators
 from dynaconf import Dynaconf, Validator
-from humanfriendly import parse_timespan, parse_size
+from humanfriendly import parse_size, parse_timespan
 
 IS_DOCKER = os.environ.get('E4EFS_DOCKER', False)
 platform_dirs = platformdirs.PlatformDirs('e4efs_spider')
@@ -184,6 +184,13 @@ PG_CONN_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
                            f'{settings.postgres.database}')
 
 
+def configure_log_handler(handler: logging.Handler):
+    handler.setLevel(logging.DEBUG)
+    msg_fmt = '%(asctime)s.%(msecs)03dZ - %(name)s - %(levelname)s - %(message)s'
+    root_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
+    handler.setFormatter(root_formatter)
+
+
 def configure_logging():
     """Configures logging
     """
@@ -198,18 +205,11 @@ def configure_logging():
         when='midnight',
         backupCount=5
     )
-    log_file_handler.setLevel(logging.DEBUG)
-
-    msg_fmt = '%(asctime)s.%(msecs)03dZ - %(name)s - %(levelname)s - %(message)s'
-    root_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
-    log_file_handler.setFormatter(root_formatter)
+    configure_log_handler(log_file_handler)
     root_logger.addHandler(log_file_handler)
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-
-    error_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
-    console_handler.setFormatter(error_formatter)
+    configure_log_handler(console_handler)
     root_logger.addHandler(console_handler)
     logging.Formatter.converter = time.gmtime
 
@@ -224,3 +224,5 @@ def configure_logging():
     logging.info('Log path: %s', get_log_path())
     logging.info('Data path: %s', get_data_path())
     logging.info('Config path: %s', get_config_path())
+    logging.info('Executing fishsense_data_processing_spider:%s',
+                 version('fishsense_data_processing_spider'))

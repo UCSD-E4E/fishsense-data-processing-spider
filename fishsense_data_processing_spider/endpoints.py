@@ -304,16 +304,15 @@ class DoLabelStudioSyncHandler(AuthenticatedHandler):
         self._label_studio.sleep_interrupt.set()
 
 
-class RawDataHandler(AuthenticatedHandler):
+class RawDataHandler(AuthenticatedDataHandler):
     """Raw Data Handler
     """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
     PATH_OVERRIDE = '/api/v1/data/raw'
 
     def initialize(self, key_store, data_model: DataModel):
-        self._data_model = data_model
         self._logger = logging.getLogger('RawDataHandler')
-        return super().initialize(key_store)
+        return super().initialize(key_store, data_model)
 
     async def get(self, checksum: str) -> None:
         """Get method implementation
@@ -322,7 +321,10 @@ class RawDataHandler(AuthenticatedHandler):
             checksum (str): Raw File checksum
         """
         self.authenticate(Permission.GET_RAW_FILE)
-        blob = self._data_model.get_raw_file_bytes(checksum)
+        try:
+            blob = self._data_model.get_raw_file_bytes(checksum)
+        except KeyError as exc:
+            raise HTTPError(HTTPStatus.NOT_FOUND, 'Invalid checksum')
         self._logger.debug('Retrieved %d bytes', len(blob))
         self.set_header('Content-Type', 'application/octet-stream')
         self.write(blob)

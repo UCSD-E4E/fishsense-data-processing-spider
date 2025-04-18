@@ -3,7 +3,7 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Collection
 
 import psycopg
 from psycopg.rows import dict_row
@@ -21,11 +21,15 @@ class DataModel:
                  preprocess_laser_jpeg_path: Path,
                  debug_data_path: Path,
                  *,
-                 max_raw_data_file_size: int = 20_000_000
+                 max_raw_data_file_size: int = 20_000_000,
+                 bad_query_handler: Collection[logging.Handler] = []
                  ):
         self._data_path_mapping = data_path_mapping
         self._pg_conn = pg_conn_str
         self._log = logging.getLogger('DataModel')
+        self.__bad_query_handler = logging.getLogger('DataModelBadQuery')
+        for handler in bad_query_handler:
+            self.__bad_query_handler.addHandler(handler)
         self._log.setLevel(logging.INFO)
         self._max_raw_data_size = max_raw_data_file_size
         self._preprocess_jpg_store = preprocess_jpeg_path
@@ -107,6 +111,8 @@ class DataModel:
             )
             result = cur.fetchone()
         if result is None:
+            self.__bad_query_handler.error(
+                '%s is not a recognized checksum', checksum)
             raise KeyError(f'{checksum} is not a recognized checksum')
         path = Path(result['path'])
         return path
