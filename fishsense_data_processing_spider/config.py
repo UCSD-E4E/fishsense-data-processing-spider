@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 import os
 import time
+from importlib.metadata import version
 from pathlib import Path
 from typing import Dict
 
@@ -224,3 +225,5 @@ def configure_logging():
     logging.info('Log path: %s', get_log_path())
     logging.info('Data path: %s', get_data_path())
     logging.info('Config path: %s', get_config_path())
+    logging.info('Executing fishsense_data_processing_spider:%s',
+                 version('fishsense_data_processing_spider'))
