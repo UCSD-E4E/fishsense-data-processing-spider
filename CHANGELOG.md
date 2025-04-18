@@ -1,6 +1,45 @@
 # CHANGELOG
 
 
+## v0.39.1 (2025-04-18)
+
+### Bug Fixes
+
+- Adds bad query handler
+  ([`bdfac29`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/bdfac29ba1cf165badf73b3375fdb27efa70d84f))
+
+- Adds bad_query_handler hooks
+  ([`5c60997`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/5c609978640697079bb30254f11128a4b0881a82))
+
+- Adds ignore flag
+  ([`f3de883`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f3de88353ea125416667ee4f576d3f3ee98274b5))
+
+- Adds version to logging
+  ([`91106ba`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/91106ba8ec224a034b8c814c0888064b7a009693))
+
+- Fixes error message
+  ([`92f880e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/92f880eae08005d46a9761ecd544070e903b293b))
+
+- Switches to AuthenticatedDataHandler, wraps KeyError
+  ([`50c2ec1`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/50c2ec1b2a201c8fe1f303771a4c93d2396fbfc5))
+
+### Chores
+
+- Adds dive priority changing tool
+  ([`7034e4e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/7034e4ee2dff1b12a2a3b9c2770722203c90a14c))
+
+### Code Style
+
+- Adds consolidated handler config
+  ([`a0662fd`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a0662fddec95ba6f6f6fcdd0ddf27eb271a39b85))
+
+- Consolidated log handler config
+  ([`952c312`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/952c3122d8fa5e7d76e69a9c219ab3752b3c5c99))
+
+- Organizes includes
+  ([`4795db9`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/4795db93dc0f3b3da078f2c8caeec1d5623257ff))
+
+
 ## v0.39.0 (2025-04-16)
 
 ### Features
