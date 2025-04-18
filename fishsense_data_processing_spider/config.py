@@ -184,6 +184,13 @@ PG_CONN_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
                            f'{settings.postgres.database}')
 
 
+def configure_log_handler(handler: logging.Handler):
+    handler.setLevel(logging.DEBUG)
+    msg_fmt = '%(asctime)s.%(msecs)03dZ - %(name)s - %(levelname)s - %(message)s'
+    root_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
+    handler.setFormatter(root_formatter)
+
+
 def configure_logging():
     """Configures logging
     """
