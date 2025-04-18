@@ -1,6 +1,5 @@
 '''Config
 '''
-
 import datetime as dt
 import logging
 import logging.handlers
@@ -13,7 +12,7 @@ from typing import Dict
 import platformdirs
 import validators
 from dynaconf import Dynaconf, Validator
-from humanfriendly import parse_timespan, parse_size
+from humanfriendly import parse_size, parse_timespan
 
 IS_DOCKER = os.environ.get('E4EFS_DOCKER', False)
 platform_dirs = platformdirs.PlatformDirs('e4efs_spider')
