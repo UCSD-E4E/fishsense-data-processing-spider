@@ -4,6 +4,7 @@ import asyncio
 import datetime as dt
 import json
 import logging
+import logging.handlers
 import signal
 import time
 from pathlib import Path
@@ -19,8 +20,9 @@ from rpyc.utils.server import ThreadedServer
 from tornado.routing import URLSpec
 
 from fishsense_data_processing_spider.config import (PG_CONN_STR,
+                                                     configure_log_handler,
                                                      configure_logging,
-                                                     settings)
+                                                     get_log_path, settings)
 from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
@@ -62,13 +64,22 @@ class Service:
             label_studio_key=settings.label_studio.api_key,
             pg_conn_str=PG_CONN_STR
         )
+        bad_query_handler = logging.handlers.TimedRotatingFileHandler(
+            filename=get_log_path() / 'bad_query.log',
+            when='midnight',
+            backupCount=5
+        )
+        configure_log_handler(bad_query_handler)
         self._data_model = DataModel(
             data_path_mapping=data_paths,
             pg_conn_str=PG_CONN_STR,
             max_raw_data_file_size=settings.data_model.max_load_size,
             preprocess_jpeg_path=settings.data_model.preprocess_jpg_store,
             preprocess_laser_jpeg_path=settings.data_model.preprocess_laser_jpg_store,
-            debug_data_path=settings.data_model.debug_data_store
+            debug_data_path=settings.data_model.debug_data_store,
+            bad_query_handler=[
+                bad_query_handler
+            ]
         )
 
         self.__crawler = Crawler(
