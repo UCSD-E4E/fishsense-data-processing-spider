@@ -129,7 +129,9 @@ class KeyStore:
             )
             self.__salt, self.__iterations = cur.fetchone()
 
-    def get_new_key(self, comment: str, expires: Optional[dt.datetime] = None) -> Tuple[str, dt.datetime]:
+    def get_new_key(self,
+                    comment: str,
+                    expires: Optional[dt.datetime] = None) -> Tuple[str, dt.datetime]:
         """Generates and stores a new API key
 
         Args:

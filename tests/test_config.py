@@ -1,14 +1,14 @@
 '''Tests config
 '''
-import datetime as dt
-from pathlib import Path
-from typing import Dict
+# import datetime as dt
+# from pathlib import Path
+# from typing import Dict
 
-import pytest
-import tomlkit
-from dynaconf import Dynaconf
+# import pytest
+# import tomlkit
+# from dynaconf import Dynaconf
 
-from fishsense_data_processing_spider.config import validators
+# from fishsense_data_processing_spider.config import validators
 
 configs = [
     {

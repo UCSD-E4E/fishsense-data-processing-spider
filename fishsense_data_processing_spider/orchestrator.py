@@ -121,6 +121,7 @@ class Orchestrator:
                                         origin: str,
                                         priority: str
                                         ) -> int:
+        # pylint: disable=too-many-arguments, too-many-positional-arguments
         do_query(
             path='sql/select_next_images_for_headtail_preprocessing.sql',
             cur=cur,
@@ -175,6 +176,7 @@ class Orchestrator:
                                      origin: str,
                                      priority: str
                                      ) -> int:
+        # pylint: disable=too-many-arguments, too-many-positional-arguments
         do_query(
             path='sql/select_next_images_for_laser_preprocessing.sql',
             cur=cur,
@@ -293,6 +295,14 @@ class Orchestrator:
         raise NotImplementedError
 
     def is_valid_job(self, job_id: uuid.UUID) -> bool:
+        """Checks whether the provided job id exists
+
+        Args:
+            job_id (uuid.UUID): Job ID
+
+        Returns:
+            bool: True if matches, otherwise False
+        """
         with psycopg.connect(self.__pgconn, row_factory=dict_row) as con, con.cursor() as cur:
             do_query(
                 path='sql/select_job_type.sql',
@@ -302,10 +312,7 @@ class Orchestrator:
                 }
             )
             result = cur.fetchone()
-            if result is None:
-                return False
-            else:
-                return True
+            return result is not None
 
     def set_job_status(self, job_id: uuid.UUID, status: JobStatus, progress: Optional[int] = None):
         """Updates job status
