@@ -35,7 +35,7 @@ services:
     networks:
       - caddy_proxy
       - default
-
+    restart: on-failure:15
   postgres:
     image: postgres:16.4
     restart: always
