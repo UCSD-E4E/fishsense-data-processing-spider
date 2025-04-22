@@ -644,6 +644,8 @@ class NewKeyHandler(AuthenticatedHandler):
 
 
 class FrameMetadataHandler(AuthenticatedDataHandler):
+    """Frame metadata handler
+    """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
     PATH_OVERRIDE = '/api/v1/metadata/frame'
 
@@ -660,9 +662,9 @@ class FrameMetadataHandler(AuthenticatedDataHandler):
         self.authenticate(Permission.GET_METADATA)
         try:
             document = self._data_model.get_frame_metadata(checksum)
-        except KeyError:
+        except KeyError as exc:
             self._logger.warning('Invalid raw file checksum %s', checksum)
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
         if not document:
             self._logger.info('No frame metadata for %s', checksum)
             raise HTTPError(HTTPStatus.NOT_FOUND)
@@ -671,6 +673,8 @@ class FrameMetadataHandler(AuthenticatedDataHandler):
 
 
 class DiveMetadataHandler(AuthenticatedDataHandler):
+    """Dive metadata handler
+    """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
     PATH_OVERRIDE = '/api/v1/metadata/dive'
 
@@ -690,6 +694,8 @@ class DiveMetadataHandler(AuthenticatedDataHandler):
 
 
 class DiveListHandler(AuthenticatedDataHandler):
+    """Dive List Handler
+    """
     SUPPORTED_METHODS = ('GET', 'OPTIONS')
 
     def initialize(self, key_store, data_model):
@@ -697,6 +703,8 @@ class DiveListHandler(AuthenticatedDataHandler):
         return super().initialize(key_store, data_model)
 
     async def get(self) -> None:
+        """Dive list handler GET
+        """
         self.authenticate(Permission.GET_METADATA)
         dive_list = self._data_model.list_dives()
         self.finish({
