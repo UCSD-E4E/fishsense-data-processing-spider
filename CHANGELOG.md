@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.40.1 (2025-04-22)
+
+### Bug Fixes
+
+- Adds remote IP to logs
+  ([`c0ac64a`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c0ac64a330c886272b42f7e25ad63acba747bb71))
+
+
 ## v0.40.0 (2025-04-22)
 
 ### Continuous Integration
