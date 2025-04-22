@@ -792,6 +792,29 @@ paths:
           $ref: '#/components/responses/401Unauthorized'
       security:
         - api_key: []
+  /api/v1/metadata/dives:
+    get:
+      tags:
+        - v1
+        - metadata
+      summary: Gets the list of all dive checksums
+      operationId: getDiveChecksums
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Dive checksums
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dives:
+                    type: array
+                    description: List of dive checksums
+                    items:
+                      type: string
+      
   /api/v1/metadata/dive/{checksum}:
     get:
       tags:

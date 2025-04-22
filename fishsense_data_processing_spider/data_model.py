@@ -3,7 +3,7 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, Collection
+from typing import Any, Dict, Optional, Collection, List
 
 import psycopg
 from psycopg.rows import dict_row
@@ -342,3 +342,16 @@ class DataModel:
         return {
             'frames': frame_ids
         }
+
+    def list_dives(self) -> List[str]:
+        """List dives
+
+        Returns:
+            List[str]: List of dive checksums
+        """
+        with psycopg.connect(self._pg_conn, row_factory=dict_row) as con, con.cursor() as cur:
+            do_query(
+                path='sql/select_dive_checksums.sql',
+                cur=cur
+            )
+            return [row['checksum'] for row in cur.fetchall()]

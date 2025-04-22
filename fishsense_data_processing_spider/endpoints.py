@@ -677,3 +677,18 @@ class DiveMetadataHandler(AuthenticatedDataHandler):
         self.authenticate(Permission.GET_METADATA)
         document = self._data_model.get_dive_metadata(checksum)
         self.finish(document)
+
+
+class DiveListHandler(AuthenticatedDataHandler):
+    SUPPORTED_METHODS = ('GET', 'OPTIONS')
+
+    def initialize(self, key_store, data_model):
+        self._logger = logging.getLogger('DiveListHandler')
+        return super().initialize(key_store, data_model)
+
+    async def get(self) -> None:
+        self.authenticate(Permission.GET_METADATA)
+        dive_list = self._data_model.list_dives()
+        self.finish({
+            'dives': dive_list
+        })

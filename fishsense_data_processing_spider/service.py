@@ -26,7 +26,7 @@ from fishsense_data_processing_spider.config import (PG_CONN_STR,
 from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
-    ApiKeyAdminHandler, DebugDataHandler, DiveMetadataHandler,
+    ApiKeyAdminHandler, DebugDataHandler, DiveListHandler, DiveMetadataHandler,
     DoDiscoveryHandler, DoLabelStudioSyncHandler, FrameMetadataHandler,
     HeadTailLabelHandler, HomePageHandler, JobStatusHandler, LaserLabelHandler,
     LensCalHandler, NewKeyHandler, NotImplementedHandler,
@@ -251,6 +251,14 @@ class Service:
             URLSpec(
                 pattern=r'/api/v1/metadata/dive/(?P<checksum>[a-z0-9]+)$',
                 handler=DiveMetadataHandler,
+                kwargs={
+                    'key_store': self.__keystore,
+                    'data_model': self._data_model
+                }
+            ),
+            URLSpec(
+                pattern=r'/api/v1/metadata/dives$',
+                handler=DiveListHandler,
                 kwargs={
                     'key_store': self.__keystore,
                     'data_model': self._data_model
