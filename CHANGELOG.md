@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.40.0 (2025-04-22)
+
+### Continuous Integration
+
+- Adds restart policy
+  ([`d70c90b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/d70c90baa9254e10b65afdda8348be5c95c0de7a))
+
+### Features
+
+- Adds dive list
+  ([`f86684e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/f86684ec0f7a3b2eca18a7c174720daaa2615c17))
+
+
 ## v0.39.1 (2025-04-18)
 
 ### Bug Fixes
@@ -32,6 +45,9 @@
 
 - Adds consolidated handler config
   ([`a0662fd`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/a0662fddec95ba6f6f6fcdd0ddf27eb271a39b85))
+
+- Cleans up linting errors
+  ([`372ad77`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/372ad77b1d9861d2a4e144e7a4e0b7a397855373))
 
 - Consolidated log handler config
   ([`952c312`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/952c3122d8fa5e7d76e69a9c219ab3752b3c5c99))
