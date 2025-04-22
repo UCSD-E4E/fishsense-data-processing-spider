@@ -25,6 +25,16 @@ class BaseHandler(RequestHandler):
     """Base Handler for E4EFS
     """
 
+    def _request_summary(self):
+        remote_ip = self.request.headers.get("X-Real-IP") or \
+            self.request.headers.get("X-Forwarded-For") or \
+            self.request.remote_ip
+        return "%s %s (%s)" % (
+            self.request.method,
+            self.request.uri,
+            remote_ip,
+        )
+
     def prepare(self):
         if hasattr(self, 'PATH_OVERRIDE'):
             request_path = self.PATH_OVERRIDE
