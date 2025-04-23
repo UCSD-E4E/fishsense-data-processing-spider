@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.42.0 (2025-04-23)
+
+### Features
+
+- Disables crawler auto run
+  ([`af1846b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/af1846b313e778cd2d487f7787956c88c9634a34))
+
+
 ## v0.41.0 (2025-04-23)
 
 ### Documentation
