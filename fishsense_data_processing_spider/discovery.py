@@ -29,7 +29,6 @@ class Crawler:
     def __init__(self,
                  data_paths: List[Union[Path, str]],
                  conn_str: str,
-                 interval: dt.timedelta,
                  *,
                  failed_images_path: Path = get_log_path() / 'failed_images.log',
                  multi_camera_dives_path: Path = get_log_path() / 'multiple_camera_dives.log',
@@ -54,10 +53,8 @@ class Crawler:
         self.__dive_insert_path = dive_insert_path
         self.stop_event = Event()
         self.sleep_interrupt = Event()
-        self.__interval = interval
         self.__process_thread: Optional[Thread] = None
 
-        self.__log.debug('Using interval %d s', self.__interval.total_seconds())
 
         get_gauge(
             'new_cdives_to_add',
@@ -68,10 +65,12 @@ class Crawler:
 
     def __image_discovery_loop(self):
         while not self.stop_event.is_set():
-            last_run = dt.datetime.now()
-            next_run = last_run + self.__interval
-            try:
+            # Wait until interrupt flag is set, i.e. discovery is triggered
+            if not self.sleep_interrupt.wait(1):
+                continue
+            self.sleep_interrupt.clear()
 
+            try:
                 for data_dir in self.__data_paths:
                     data_dir = Path(data_dir)
                     self.__discover_dives(data_dir)
@@ -96,10 +95,6 @@ class Crawler:
             except Exception as exc:  # pylint: disable=broad-except
                 self.__log.exception('Image discovery failed due to %s', exc)
 
-            self.sleep_interrupt.clear()
-            time_to_sleep = (next_run - dt.datetime.now()).total_seconds()
-            if time_to_sleep > 0:
-                self.sleep_interrupt.wait(time_to_sleep)
 
     def __conslidate_dives(self):
         with psycopg.connect(self.__conn, row_factory=dict_row) as con, con.cursor() as cur:

@@ -85,7 +85,6 @@ class Service:
         self.__crawler = Crawler(
             data_paths=list(data_paths.values()),
             conn_str=PG_CONN_STR,
-            interval=settings.scraper.interval,
         )
 
         self.stop_event = asyncio.Event()

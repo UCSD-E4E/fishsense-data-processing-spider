@@ -77,11 +77,6 @@ validators = [
         condition=lambda x: Path(x).is_file()
     ),
     Validator(
-        'scraper.interval',
-        cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
-        default='1m'
-    ),
-    Validator(
         'summary.interval',
         cast=lambda x: dt.timedelta(seconds=parse_timespan(x)),
         default='1m'

@@ -1,5 +1,4 @@
 [scraper]
-interval = "1h"
 data_paths = "data_paths.json"
 
 [summary]
