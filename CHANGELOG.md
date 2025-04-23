@@ -1,12 +1,33 @@
 # CHANGELOG
 
 
+## v0.41.0 (2025-04-23)
+
+### Documentation
+
+- Adds docstring
+  ([`440fa5e`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/440fa5ef3ac392efe70c0d29f4a9afda54e81337))
+
+- Fixes scopes
+  ([`e4a8c7b`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/e4a8c7b008f648a565f2ef458aa89d82dbd1f191))
+
+### Features
+
+- Adds tornado.access logger
+  ([`ef7a9d8`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/ef7a9d81222483aa0d9a3f849503c6de87848bfe))
+
+
 ## v0.40.1 (2025-04-22)
 
 ### Bug Fixes
 
 - Adds remote IP to logs
   ([`c0ac64a`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/c0ac64a330c886272b42f7e25ad63acba747bb71))
+
+### Code Style
+
+- Fixes pylint errors
+  ([`9a2c25c`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/9a2c25c7bee279df5c46706bef493cecbe1f3725))
 
 
 ## v0.40.0 (2025-04-22)
