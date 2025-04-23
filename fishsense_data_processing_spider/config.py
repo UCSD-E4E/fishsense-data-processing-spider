@@ -174,7 +174,7 @@ settings = Dynaconf(
 # `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
 # `settings_files` = Load these files in the order.
 with open(settings.postgres.password_file, 'r', encoding='utf-8') as handle:
-    __postgres_password = handle.read(256)
+    __postgres_password = handle.read(256).strip()
 PG_CONN_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
                            f'{settings.postgres.host}:{settings.postgres.port}/'
                            f'{settings.postgres.database}')
