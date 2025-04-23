@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.42.1 (2025-04-23)
+
+### Bug Fixes
+
+- Strips password file output
+  ([`b34fe72`](https://github.com/UCSD-E4E/fishsense-data-processing-spider/commit/b34fe72b6d38563538cfec1f174a38628325fc1f))
+
+
 ## v0.42.0 (2025-04-23)
 
 ### Features
