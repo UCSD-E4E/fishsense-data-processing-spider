@@ -4,6 +4,7 @@ import datetime as dt
 import logging
 import logging.handlers
 import os
+import re
 import time
 from importlib.metadata import version
 from pathlib import Path
@@ -185,6 +186,11 @@ PG_CONN_STR = (f'postgres://{settings.postgres.username}:{__postgres_password}@'
 
 
 def configure_log_handler(handler: logging.Handler):
+    """Configures the log handler with standard formatting
+
+    Args:
+        handler (logging.Handler): Handler to configure
+    """
     handler.setLevel(logging.DEBUG)
     msg_fmt = '%(asctime)s.%(msecs)03dZ - %(name)s - %(levelname)s - %(message)s'
     root_formatter = logging.Formatter(msg_fmt, datefmt='%Y-%m-%dT%H:%M:%S')
