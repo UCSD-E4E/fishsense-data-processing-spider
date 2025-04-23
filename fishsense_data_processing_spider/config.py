@@ -191,6 +191,34 @@ def configure_log_handler(handler: logging.Handler):
     handler.setFormatter(root_formatter)
 
 
+class RegexDenyNameFilter(logging.Filter):
+    """Filter to deny based on regex on logging.LogRecord.name
+
+    """
+    # pylint: disable=too-few-public-methods
+    # Standard for logging.Filter objects
+
+    def __init__(self, name_pattern: str):
+        # pylint: disable=super-init-not-called
+        # This should override all behaviors.  logging.Filter.__init__ is trivial
+        self.__pattern = re.compile(name_pattern)
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filters log records
+
+        Deny based on re.search match on record.name
+
+        Args:
+            record (logging.LogRecord): Log Record to filter on
+
+        Returns:
+            bool: True if record should be logged, otherwise False
+        """
+        if self.__pattern.search(record.name):
+            return False
+        return True
+
+
 def configure_logging():
     """Configures logging
     """
@@ -207,6 +235,21 @@ def configure_logging():
     )
     configure_log_handler(log_file_handler)
     root_logger.addHandler(log_file_handler)
+    log_file_handler.addFilter(
+        RegexDenyNameFilter(r'tornado\.access')
+    )
+
+    access_log_dest = get_log_path() / 'tornado_access.log'
+    access_handler = logging.handlers.TimedRotatingFileHandler(
+        filename=access_log_dest,
+        when='midnight',
+        backupCount=5
+    )
+    configure_log_handler(access_handler)
+    root_logger.addHandler(access_handler)
+    access_handler.addFilter(
+        logging.Filter('tornado.access')
+    )
 
     console_handler = logging.StreamHandler()
     configure_log_handler(console_handler)
