@@ -282,7 +282,7 @@ class Service:
                       for mapping in data_path_mappings}
         for data_dir in data_paths.values():
             if not data_dir.is_dir():
-                raise RuntimeError('Data path is not a directory: {data_dir}.')
+                raise RuntimeError(f'Data path is not a directory: {data_dir}.')
         return data_paths
 
     def __summary_loop(self):
