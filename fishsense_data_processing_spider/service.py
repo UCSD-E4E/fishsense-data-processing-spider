@@ -304,10 +304,8 @@ class Service:
             for data_dir in data_paths.values():
                 keep_alive_path = data_dir / "keep_alive.txt"
 
-                with keep_alive_path.open("w", encoding="utf8") as keep_alive:
-                    keep_alive.writelines([
-                        dt.datetime.now().isoformat()
-                    ])  # Write the current date.
+                # We only need to check something.
+                _ = keep_alive_path.exists()
 
             time.sleep(5 * 60)  # Sleep for five minutes
 
