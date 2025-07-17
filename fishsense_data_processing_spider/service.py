@@ -98,6 +98,13 @@ class Service:
         )
         add_thread_to_monitor(self.__summary_thread)
 
+        self.__data_paths_heartbeat_thread = Thread(
+            target=self.__data_paths_heartbeat_loop,
+            name='data_paths_heartbeat_thread',
+            daemon=True
+        )
+        add_thread_to_monitor(self.__data_paths_heartbeat_thread)
+
         self.__keystore = KeyStore(settings.web_api.key_store)
 
         self.rpyc_endpoint = ThreadedServer(
@@ -284,6 +291,26 @@ class Service:
             if not data_dir.is_dir():
                 raise RuntimeError(f'Data path is not a directory: {data_dir}.')
         return data_paths
+
+    def __data_paths_heartbeat_loop(self):
+        __log = logging.getLogger('data_paths_heartbeat')
+        with open(settings.scraper.data_paths, 'r', encoding='utf-8') as handle:
+            data_path_mappings: List[Dict[str, str]] = json.load(handle)[
+                'data_paths']
+        data_paths = {Path(mapping['unc_path']): Path(mapping['mount'])
+                      for mapping in data_path_mappings}
+
+        while True:
+            for data_dir in data_paths.values():
+                keep_alive_path = data_dir / "keep_alive.txt"
+
+                with keep_alive_path.open("w", encoding="utf8") as keep_alive:
+                    keep_alive.writelines([
+                        dt.datetime.now().isoformat()
+                    ])  # Write the current date.
+
+            time.sleep(5 * 60)  # Sleep for five minutes
+
 
     def __summary_loop(self):
         __log = logging.getLogger('summary')
