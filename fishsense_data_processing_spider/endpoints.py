@@ -417,7 +417,7 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         )
         self.set_header(
             'Access-Control-Allow-Origin',
-            settings.label_studio.host
+            f'https://{settings.label_studio.host}'
         )
         self.write(blob)
         self.flush()
@@ -525,7 +525,7 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         )
         self.set_header(
             'Access-Control-Allow-Origin',
-            settings.label_studio.host
+            f'https://{settings.label_studio.host}'
         )
         self.write(blob)
         self.flush()
