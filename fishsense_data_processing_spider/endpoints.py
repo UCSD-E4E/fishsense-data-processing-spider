@@ -11,6 +11,7 @@ from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
 from fishsense_data_processing_spider import __version__
+from fishsense_data_processing_spider.config import settings
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
 from fishsense_data_processing_spider.orchestrator import (JobStatus,
@@ -414,6 +415,10 @@ class PreprocessJpegHandler(AuthenticatedHandler):
             'Cache-Control',
             'max-age=3600, must-revalidate, no-transform, immutable'
         )
+        self.set_header(
+            'Access-Control-Allow-Origin',
+            settings.label_studio.host
+        )
         self.write(blob)
         self.flush()
         self.finish()
@@ -517,6 +522,10 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.set_header(
             'Cache-Control',
             'max-age=3600, must-revalidate, no-transform, immutable'
+        )
+        self.set_header(
+            'Access-Control-Allow-Origin',
+            settings.label_studio.host
         )
         self.write(blob)
         self.flush()
