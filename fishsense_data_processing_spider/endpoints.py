@@ -11,6 +11,7 @@ from typing import Optional
 
 from tornado.web import HTTPError, RequestHandler
 from fishsense_data_processing_spider import __version__
+from fishsense_data_processing_spider.config import settings
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.metrics import get_counter, get_summary
 from fishsense_data_processing_spider.orchestrator import (JobStatus,
@@ -69,7 +70,8 @@ class BaseHandler(RequestHandler):
 
     def set_default_headers(self):
         super().set_default_headers()
-        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Origin',
+                        f'https://{settings.label_studio.host}')
         self.set_header('Access-Control-Allow-Headers',
                         'Content-Type, api_key, Authorization')
         self.set_header('Access-Control-Allow-Methods',

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "fishsense_data_processing_spider"
-version = "0.42.1"
+version = "1.0.7"
 description = "Fishsense Data Processing Spider"
 authors = [
     "UCSD Engineers for Exploration <e4e@ucsd.edu>"
@@ -27,6 +27,7 @@ validators = "^0.34.0"
 tornado = "^6.5.1"
 pytz = "^2025.2"
 rpyc = "^6.0.1"
+httpx = "^0.28.1"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.7"
