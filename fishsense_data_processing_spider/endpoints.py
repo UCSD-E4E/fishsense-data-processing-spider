@@ -70,7 +70,8 @@ class BaseHandler(RequestHandler):
 
     def set_default_headers(self):
         super().set_default_headers()
-        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Origin',
+                        f'https://{settings.label_studio.host}')
         self.set_header('Access-Control-Allow-Headers',
                         'Content-Type, api_key, Authorization')
         self.set_header('Access-Control-Allow-Methods',
@@ -415,10 +416,6 @@ class PreprocessJpegHandler(AuthenticatedHandler):
             'Cache-Control',
             'max-age=3600, must-revalidate, no-transform, immutable'
         )
-        self.set_header(
-            'Access-Control-Allow-Origin',
-            f'https://{settings.label_studio.host}'
-        )
         self.write(blob)
         self.flush()
         self.finish()
@@ -522,10 +519,6 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.set_header(
             'Cache-Control',
             'max-age=3600, must-revalidate, no-transform, immutable'
-        )
-        self.set_header(
-            'Access-Control-Allow-Origin',
-            f'https://{settings.label_studio.host}'
         )
         self.write(blob)
         self.flush()

@@ -307,7 +307,7 @@ class Service:
                 # We only need to check something.
                 _ = keep_alive_path.exists()
 
-            time.sleep(5 * 60)  # Sleep for five minutes
+            time.sleep(0.5 * 60)  # Sleep for half a minute
 
 
     def __summary_loop(self):
