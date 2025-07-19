@@ -158,6 +158,16 @@ validators = [
         'web_api.root_url',
         cast=str,
         required=True
+    ),
+    Validator(
+        'cache.path',
+        cast=Path,
+        required=True
+    ),
+    Validator(
+        'cache.max_storage_mb',
+        cast=parse_size,
+        default='2G'
     )
 ]
 

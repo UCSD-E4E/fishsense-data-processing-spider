@@ -5,6 +5,8 @@
         "ms-toolsai.jupyter",
         "njpwerner.autodocstring",
         "ms-python.isort",
-        "ms-python.autopep8"
+        "eamodio.gitlens",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "ms-python.black-formatter",
     ]
 }

@@ -3,11 +3,12 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, Collection, List
+from typing import Any, Collection, Dict, List, Optional
 
 import psycopg
 from psycopg.rows import dict_row
 
+from fishsense_data_processing_spider.file_cache import FileCache
 from fishsense_data_processing_spider.sql_utils import do_query
 
 
@@ -130,6 +131,8 @@ class DataModel:
         Returns:
             Path: Local path
         """
+        file_cache = FileCache.instance
+
         matching_paths = {volume: mount
                           for volume, mount in self._data_path_mapping.items()
                           if unc_path.is_relative_to(volume)}
@@ -140,11 +143,13 @@ class DataModel:
         volume = list(matching_paths.keys())[0]
         mount = matching_paths[volume]
         local_path = mount / unc_path.relative_to(volume)
+        cache_path = file_cache.get_cached_file(local_path)
         self._log.debug('path: %s', unc_path.as_posix())
         self._log.debug('volume: %s', volume.as_posix())
         self._log.debug('mount: %s', mount.as_posix())
         self._log.debug('local_path: %s', local_path.as_posix())
-        return local_path
+        self._log.debug('cache_path: %s', cache_path.as_posix())
+        return cache_path
 
     def put_preprocess_jpeg(self, checksum: str, data: bytes) -> None:
         """Put Preprocessed JPEG
