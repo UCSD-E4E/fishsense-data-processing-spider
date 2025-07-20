@@ -61,7 +61,7 @@ class DataModel:
         if result is None:
             raise KeyError(f'{camera_id} is not a recognized camera')
         path = Path(result['path'])
-        local_path = self.map_local_path(path)
+        local_path = self.map_cache_path(path)
         if not local_path.is_file():
             raise FileNotFoundError(f'{local_path} not found!')
 
@@ -83,7 +83,7 @@ class DataModel:
             bytes: Raw file bytes
         """
         path = self.verify_raw_checksum(checksum)
-        local_path = self.map_local_path(path)
+        local_path = self.map_cache_path(path)
         if not local_path.is_file():
             raise FileNotFoundError(f'{local_path} not found!')
 
@@ -131,8 +131,6 @@ class DataModel:
         Returns:
             Path: Local path
         """
-        file_cache = FileCache.instance
-
         matching_paths = {volume: mount
                           for volume, mount in self._data_path_mapping.items()
                           if unc_path.is_relative_to(volume)}
@@ -143,12 +141,32 @@ class DataModel:
         volume = list(matching_paths.keys())[0]
         mount = matching_paths[volume]
         local_path = mount / unc_path.relative_to(volume)
-        cache_path = file_cache.get_cached_file(local_path)
         self._log.debug('path: %s', unc_path.as_posix())
         self._log.debug('volume: %s', volume.as_posix())
         self._log.debug('mount: %s', mount.as_posix())
         self._log.debug('local_path: %s', local_path.as_posix())
+        return local_path
+    
+    def map_cache_path(self, unc_path: Path) -> Path:
+        """Map UNC path to cache path
+
+        Args:
+            unc_path (Path): UNC path
+
+        Raises:
+            FileNotFoundError: Volume not mounted
+            FileNotFoundError: File not found
+
+        Returns:
+            Path: cache path
+        """
+        file_cache = FileCache.instance
+
+        local_path = self.map_local_path(unc_path)
+        cache_path = file_cache.get_cached_file(local_path)
+
         self._log.debug('cache_path: %s', cache_path.as_posix())
+
         return cache_path
 
     def put_preprocess_jpeg(self, checksum: str, data: bytes) -> None:
@@ -211,7 +229,7 @@ class DataModel:
         """
         self.verify_raw_checksum(checksum=checksum)
         final_path = self._preprocess_jpg_store / (checksum + '.JPG')
-        local_path = self.map_local_path(final_path)
+        local_path = self.map_cache_path(final_path)
         if not local_path.is_file():
             raise FileNotFoundError(f'{local_path} not found!')
 
@@ -232,7 +250,7 @@ class DataModel:
         """
         self.verify_raw_checksum(checksum=checksum)
         final_path = self._preprocess_laser_jpg_store / (checksum + '.JPG')
-        local_path = self.map_local_path(final_path)
+        local_path = self.map_cache_path(final_path)
         if not local_path.is_file():
             raise FileNotFoundError(f'{local_path} not found!')
 
