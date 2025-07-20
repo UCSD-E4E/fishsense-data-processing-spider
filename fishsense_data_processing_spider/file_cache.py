@@ -10,14 +10,16 @@ from fishsense_data_processing_spider.config import settings
 
 
 class FileCache:
+    """Represents a file system cache.
+    """
     instance: Self = None
 
     def __init__(self, max_storage_mb: int=None):
+        self.__log = logging.getLogger('FileCache')
+
         if max_storage_mb is None:
             max_storage_mb = settings.cache.max_storage_mb
         self.__log.debug("max_storage_mb: %d", max_storage_mb)
-
-        self.__log = logging.getLogger('FileCache')
 
         self.__cache_path: Path = settings.cache.path
         self.__cache_path.mkdir(parents=True, exist_ok=True)
@@ -75,6 +77,12 @@ class FileCache:
             self._garbage_collector_thread.start()
 
     def add_to_cache(self, key: Path):
+        """Adds the given path to the file system cache.
+
+        Args:
+            key (Path): The path to cache.
+        """
+
         if self.test_cached_file(key):
             return
         
@@ -91,15 +99,41 @@ class FileCache:
         self._collect_garbage()
 
     def get_cached_file(self, key: Path) -> Path:
+        """Gets the cached file from the cache
+
+        Args:
+            key (Path): The path to get from the cache.
+
+        Returns:
+            Path: The cached path
+        """
+
         if not self.test_cached_file(key):
             self.add_to_cache(key)
 
         return self.__cache_map[key]
 
     def test_cached_file(self, key: Path) -> bool:
+        """Tests if the file is cached
+
+        Args:
+            key (Path): The path to check the cache.
+
+        Returns:
+            bool: True if in the cache false otherwise
+        """
+
         return key in self.__cache_map
 
     def remove_from_cache(self, key: Path):
+        """Remove the given path from the cache.
+
+        Args:
+            key (Path): The path to remove from the cache.
+        """
+        if not self.test_cached_file(key):
+            return
+
         with self.__cache_map_lock:
             file_to_remove = self.__cache_map.pop(key)
             self.__occupied_storage -= file_to_remove.lstat().st_size
