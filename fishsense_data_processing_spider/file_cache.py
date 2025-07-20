@@ -1,4 +1,4 @@
-"""Represents a file system cache.
+"""Represents a file system cache. 
 """
 import logging
 import pickle
