@@ -158,7 +158,7 @@ class DataModel:
             FileNotFoundError: File not found
 
         Returns:
-            Path: cache path
+            Path: Cache path
         """
         file_cache = FileCache.instance
 
