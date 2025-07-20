@@ -1,3 +1,5 @@
+"""Represents a file system cache.
+"""
 import logging
 import pickle
 import shutil
