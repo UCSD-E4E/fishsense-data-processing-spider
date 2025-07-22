@@ -2,7 +2,6 @@
 
 import logging
 import pickle
-import shutil
 import subprocess
 import threading
 import uuid

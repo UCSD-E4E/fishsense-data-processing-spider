@@ -11,6 +11,7 @@ def test_singleton():
 
     assert isinstance(file_cache, FileCache)
 
+
 def test_add_remove_to_cache():
     file_cache = FileCache.instance
 
@@ -22,6 +23,7 @@ def test_add_remove_to_cache():
 
     file_cache.remove_from_cache(file_path)
     assert not file_cache.test_cached_file(file_path)
+
 
 def test_get_cached_file():
     file_cache = FileCache.instance
@@ -46,6 +48,7 @@ def test_get_cached_file():
 
     file_cache.remove_from_cache(file_path)
 
+
 def test_garbage_collection():
     big_file_cache = FileCache.instance
 
@@ -53,7 +56,7 @@ def test_garbage_collection():
     big_file_cache.add_to_cache(file_path)
 
     small_file_cache = FileCache(max_storage_mb=0)
-    
+
     assert small_file_cache.test_cached_file(file_path)
     small_file_cache._collect_garbage()
     small_file_cache._garbage_collector_thread.join()
