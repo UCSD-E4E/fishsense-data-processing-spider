@@ -1,8 +1,9 @@
-"""Represents a file system cache. 
-"""
+"""Represents a file system cache."""
+
 import logging
 import pickle
 import shutil
+import subprocess
 import threading
 import uuid
 from pathlib import Path
@@ -14,11 +15,10 @@ from fishsense_data_processing_spider.config import settings
 class FileCache:
     # pylint: disable=too-many-instance-attributes
 
-    """Represents a file system cache.
-    """
+    """Represents a file system cache."""
     instance: Self = None
 
-    def __init__(self, max_storage_mb: int=None):
+    def __init__(self, max_storage_mb: int = None):
         self.__log = logging.getLogger("FileCache")
 
         if max_storage_mb is None:
@@ -43,9 +43,7 @@ class FileCache:
 
         self.__garbage_collector_lock = threading.Lock()
         self._garbage_collector_thread = threading.Thread(
-            target=self.__do_collect_garbage,
-            name="collect_garbage",
-            daemon=True
+            target=self.__do_collect_garbage, name="collect_garbage", daemon=True
         )
 
     def __get_occupied_storage(self) -> int:
@@ -54,7 +52,7 @@ class FileCache:
     def __do_collect_garbage(self):
         with self.__garbage_collector_lock:
             if self.__occupied_storage < self.__max_storage_mb:
-                return # Exit early
+                return  # Exit early
 
             file_keys = list(self.__cache_map.keys())
             # Sort so that earliest time is first.
@@ -80,14 +78,26 @@ class FileCache:
         if self.__occupied_storage >= self.__max_storage_mb:
             self._garbage_collector_thread.start()
 
-    def __do_add_to_cache(self, key: Path=None):
+    def __do_add_to_cache(self, key: Path = None):
         if self.test_cached_file(key):
             return
 
         target_file_name = str(uuid.uuid1())
         target_path = self.__cache_path / target_file_name
 
-        shutil.copy(key, target_path)
+        subprocess.run(
+            [
+                "ionice",
+                "-c",
+                "3",
+                "nice",
+                "-n",
+                "19",
+                "cp",
+                key.absolute().resolve().as_posix(),
+                target_path.absolute().resolve().as_posix(),
+            ]
+        )
         with self.__cache_map_lock:
             self.__cache_map[key] = target_path
             self.__pickle_cache_map()
@@ -105,9 +115,7 @@ class FileCache:
             target=self.__do_add_to_cache,
             name="add_to_cache",
             daemon=True,
-            kwargs={
-                "key": key
-            }
+            kwargs={"key": key},
         )
         thread.start()
 
@@ -155,5 +163,6 @@ class FileCache:
             self.__pickle_cache_map()
 
             file_to_remove.unlink()
+
 
 FileCache.instance = FileCache()
