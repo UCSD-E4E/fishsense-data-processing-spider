@@ -78,13 +78,7 @@ class FileCache:
         if self.__occupied_storage >= self.__max_storage_mb:
             self._garbage_collector_thread.start()
 
-    def add_to_cache(self, key: Path):
-        """Adds the given path to the file system cache.
-
-        Args:
-            key (Path): The path to cache.
-        """
-
+    def __do_add_to_cache(self, key: Path=None):
         if self.test_cached_file(key):
             return
         
@@ -94,11 +88,26 @@ class FileCache:
         shutil.copy(key, target_path)
         with self.__cache_map_lock:
             self.__cache_map[key] = target_path
-
             self.__pickle_cache_map()
 
         # We only need to worry about collecting garbage when adding.
         self._collect_garbage()
+
+    def add_to_cache(self, key: Path):
+        """Adds the given path to the file system cache.
+
+        Args:
+            key (Path): The path to cache.
+        """
+        thread = threading.Thread(
+            target=self.__do_add_to_cache,
+            name='add_to_cache',
+            daemon=True,
+            kwargs={
+                "key": key
+            }
+        )
+        thread.start()
 
     def get_cached_file(self, key: Path) -> Path:
         """Gets the cached file from the cache
@@ -112,6 +121,8 @@ class FileCache:
 
         if not self.test_cached_file(key):
             self.add_to_cache(key)
+
+            return key
 
         return self.__cache_map[key]
 
@@ -139,8 +150,8 @@ class FileCache:
         with self.__cache_map_lock:
             file_to_remove = self.__cache_map.pop(key)
             self.__occupied_storage -= file_to_remove.lstat().st_size
-            file_to_remove.unlink()
-
             self.__pickle_cache_map()
+
+            file_to_remove.unlink()
 
 FileCache.instance = FileCache()
