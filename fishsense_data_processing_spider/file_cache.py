@@ -84,7 +84,7 @@ class FileCache:
         target_file_name = str(uuid.uuid1())
         target_path = self.__cache_path / target_file_name
 
-        subprocess.run(
+        process = subprocess.run(
             [
                 "ionice",
                 "-c",
@@ -95,8 +95,15 @@ class FileCache:
                 "cp",
                 key.absolute().resolve().as_posix(),
                 target_path.absolute().resolve().as_posix(),
-            ]
+            ],
+            check=False,
         )
+        try:
+            process.check_returncode()
+        except subprocess.CalledProcessError:
+            # We failed, don't save
+            return
+
         with self.__cache_map_lock:
             self.__cache_map[key] = target_path
             self.__pickle_cache_map()

@@ -33,11 +33,8 @@ class BaseHandler(RequestHandler):
             or self.request.headers.get("X-Forwarded-For")
             or self.request.remote_ip
         )
-        return "%s %s (%s)" % (
-            self.request.method,
-            self.request.uri,
-            remote_ip,
-        )
+
+        return f"{self.request.method} {self.request.uri} ({remote_ip})"
 
     def prepare(self):
         if hasattr(self, "PATH_OVERRIDE"):
@@ -323,7 +320,7 @@ class RawDataHandler(AuthenticatedDataHandler):
         try:
             blob = self._data_model.get_raw_file_bytes(checksum)
         except KeyError as exc:
-            raise HTTPError(HTTPStatus.NOT_FOUND, "Invalid checksum")
+            raise HTTPError(HTTPStatus.NOT_FOUND, "Invalid checksum") from exc
         self._logger.debug("Retrieved %d bytes", len(blob))
         self.set_header("Content-Type", "application/octet-stream")
         self.write(blob)
@@ -380,8 +377,8 @@ class PreprocessJpegHandler(AuthenticatedHandler):
         self.authenticate(Permission.PUT_PREPROCESS_JPEG)
         try:
             self._data_model.verify_raw_checksum(checksum)
-        except KeyError:
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+        except KeyError as exc:
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
 
         self._data_model.put_preprocess_jpeg(checksum=checksum, data=self.request.body)
         self.set_status(HTTPStatus.OK)
@@ -424,12 +421,12 @@ class LaserLabelHandler(AuthenticatedHandler):
         self.authenticate(Permission.GET_RAW_FILE)
         try:
             document = self._data_model.get_laser_label(checksum)
-        except KeyError:
+        except KeyError as exc:
             self._logger.warning("Invalid raw file checksum %s", checksum)
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
         if not document:
             self._logger.info("No laser label for %s", checksum)
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
         self._logger.debug("Got %s", document)
         self.finish(document)
 
@@ -481,8 +478,8 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.authenticate(Permission.PUT_LASER_FRAME)
         try:
             self._data_model.verify_raw_checksum(checksum)
-        except KeyError:
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+        except KeyError as exc:
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
 
         self._data_model.put_preprocess_laser_jpeg(
             checksum=checksum, data=self.request.body
@@ -510,8 +507,8 @@ class PreprocessLaserJpegHandler(AuthenticatedHandler):
         self.authenticate(Permission.ADMIN)
         try:
             self._data_model.verify_raw_checksum(checksum)
-        except KeyError:
-            raise HTTPError(HTTPStatus.NOT_FOUND)
+        except KeyError as exc:
+            raise HTTPError(HTTPStatus.NOT_FOUND) from exc
 
         self._data_model.delete_preprocess_laser_jpeg(checksum)
         self.set_status(HTTPStatus.OK)
@@ -534,10 +531,10 @@ class DebugDataHandler(AuthenticatedJobHandler):
         self.authenticate(Permission.PUT_DEBUG_BLOB)
         try:
             job_id = uuid.UUID(job_id)
-        except ValueError:
-            raise HTTPError(HTTPStatus.BAD_REQUEST, "Invalid job id")
+        except ValueError as exc:
+            raise HTTPError(HTTPStatus.BAD_REQUEST, "Invalid job id") from exc
         if not self._orchestrator.is_valid_job(job_id):
-            raise HTTPError(HTTPStatus.NOT_FOUND, "Job not found")
+            raise HTTPError(HTTPStatus.NOT_FOUND, "Job not found") from exc
         self._data_model.put_debug_data(job_id=job_id, data=self.request.body)
         self.set_status(HTTPStatus.OK)
         self.finish()
