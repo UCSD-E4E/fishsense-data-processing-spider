@@ -12,12 +12,14 @@ from fishsense_data_processing_spider.config import settings
 
 
 class FileCache:
+    # pylint: disable=too-many-instance-attributes
+
     """Represents a file system cache.
     """
     instance: Self = None
 
     def __init__(self, max_storage_mb: int=None):
-        self.__log = logging.getLogger('FileCache')
+        self.__log = logging.getLogger("FileCache")
 
         if max_storage_mb is None:
             max_storage_mb = settings.cache.max_storage_mb
@@ -34,7 +36,7 @@ class FileCache:
             with self.__cache_map_pickle_path.open("rb") as file:
                 self.__cache_map = pickle.load(file)
         else:
-            self.__cache_map: Dict[Path, Path] = dict()
+            self.__cache_map: Dict[Path, Path] = {}
 
         self.__max_storage_mb = max_storage_mb
         self.__occupied_storage = self.__get_occupied_storage()
@@ -42,18 +44,18 @@ class FileCache:
         self.__garbage_collector_lock = threading.Lock()
         self._garbage_collector_thread = threading.Thread(
             target=self.__do_collect_garbage,
-            name='collect_garbage',
+            name="collect_garbage",
             daemon=True
         )
 
     def __get_occupied_storage(self) -> int:
         return sum(f.lstat().st_size for f in self.__cache_map.values())
 
-    def __do_collect_garbage(self):        
+    def __do_collect_garbage(self):
         with self.__garbage_collector_lock:
             if self.__occupied_storage < self.__max_storage_mb:
                 return # Exit early
-            
+
             file_keys = list(self.__cache_map.keys())
             # Sort so that earliest time is first.
             file_keys.sort(key=lambda k: self.__cache_map[k].lstat().st_atime)
@@ -81,7 +83,7 @@ class FileCache:
     def __do_add_to_cache(self, key: Path=None):
         if self.test_cached_file(key):
             return
-        
+
         target_file_name = str(uuid.uuid1())
         target_path = self.__cache_path / target_file_name
 
@@ -101,7 +103,7 @@ class FileCache:
         """
         thread = threading.Thread(
             target=self.__do_add_to_cache,
-            name='add_to_cache',
+            name="add_to_cache",
             daemon=True,
             kwargs={
                 "key": key

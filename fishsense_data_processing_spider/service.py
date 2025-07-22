@@ -19,23 +19,43 @@ from prometheus_client import start_http_server
 from rpyc.utils.server import ThreadedServer
 from tornado.routing import URLSpec
 
-from fishsense_data_processing_spider.config import (PG_CONN_STR,
-                                                     configure_log_handler,
-                                                     configure_logging,
-                                                     get_log_path, settings)
+from fishsense_data_processing_spider.config import (
+    PG_CONN_STR,
+    configure_log_handler,
+    configure_logging,
+    get_log_path,
+    settings,
+)
 from fishsense_data_processing_spider.data_model import DataModel
 from fishsense_data_processing_spider.discovery import Crawler
 from fishsense_data_processing_spider.endpoints import (
-    ApiKeyAdminHandler, DebugDataHandler, DiveListHandler, DiveMetadataHandler,
-    DoDiscoveryHandler, DoLabelStudioSyncHandler, FrameMetadataHandler,
-    HeadTailLabelHandler, HomePageHandler, JobStatusHandler, LaserLabelHandler,
-    LensCalHandler, NewKeyHandler, NotImplementedHandler,
-    PreprocessJpegHandler, PreprocessLaserJpegHandler, RawDataHandler,
-    RetrieveBatch, VersionHandler)
+    ApiKeyAdminHandler,
+    DebugDataHandler,
+    DiveListHandler,
+    DiveMetadataHandler,
+    DoDiscoveryHandler,
+    DoLabelStudioSyncHandler,
+    FrameMetadataHandler,
+    HeadTailLabelHandler,
+    HomePageHandler,
+    JobStatusHandler,
+    LaserLabelHandler,
+    LensCalHandler,
+    NewKeyHandler,
+    NotImplementedHandler,
+    PreprocessJpegHandler,
+    PreprocessLaserJpegHandler,
+    RawDataHandler,
+    RetrieveBatch,
+    VersionHandler,
+)
 from fishsense_data_processing_spider.label_studio_sync import LabelStudioSync
-from fishsense_data_processing_spider.metrics import (add_thread_to_monitor,
-                                                      get_gauge, get_summary,
-                                                      system_monitor_thread)
+from fishsense_data_processing_spider.metrics import (
+    add_thread_to_monitor,
+    get_gauge,
+    get_summary,
+    system_monitor_thread,
+)
 from fishsense_data_processing_spider.orchestrator import Orchestrator
 from fishsense_data_processing_spider.rpyc_endpoint import CliService
 from fishsense_data_processing_spider.web_auth import KeyStore
@@ -302,7 +322,7 @@ class Service:
 
         while True:
             for data_dir in data_paths.values():
-                keep_alive_path = data_dir / "keep_alive.txt"
+                keep_alive_path = data_dir / 'keep_alive.txt'
 
                 # We only need to check something.
                 _ = keep_alive_path.exists()

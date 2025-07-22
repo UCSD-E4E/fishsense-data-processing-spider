@@ -146,7 +146,7 @@ class DataModel:
         self._log.debug('mount: %s', mount.as_posix())
         self._log.debug('local_path: %s', local_path.as_posix())
         return local_path
-    
+
     def map_cache_path(self, unc_path: Path) -> Path:
         """Map UNC path to cache path
 
