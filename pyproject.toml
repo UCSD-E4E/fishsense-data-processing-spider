@@ -21,7 +21,7 @@ humanfriendly = "^10.0"
 psycopg = {extras = ["binary"], version = "^3.2.6"}
 numpy = "<2.0.0"
 label-studio-sdk = "^1.0.10"
-pillow = "^11.1.0"
+pillow = "^12.1.1"
 pyexiftool = "^0.5.6"
 validators = "^0.34.0"
 tornado = "^6.5.1"
